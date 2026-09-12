@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Drip Closet — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Syne+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#07060a;--panel:#100f14;--card:#18161e;--rim:#252230;
+  --mist:#7070a0;--bone:#ede8e0;
+  --accent:#ff8c00;--accent2:#ffb347;--ag:rgba(255,140,0,.12);
+  --green:#00e87a;--red:#ff4455;--purple:#7b5ea7;--blue:#4488ff;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;font-size:15px;line-height:1.6;overscroll-behavior:none}
+::selection{background:var(--accent);color:#000}
+img{display:block;max-width:100%}
+button{font-family:'Inter',sans-serif}
+input,select,textarea{font-family:'Inter',sans-serif}
+
+/* ══════════════════════════════════════
+   LOGIN GATE
+══════════════════════════════════════ */
+#loginGate{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px;
+}
+#loginGate.gone{display:none}
+.lg-logo{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(32px,8vw,52px);letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--bone),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:6px;text-align:center;
+}
+.lg-sub{
+  font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--mist);margin-bottom:44px;text-align:center;
+}
+.lg-box{
+  width:100%;max-width:380px;
+  background:var(--panel);border:1px solid var(--rim);border-radius:16px;
+  padding:32px 28px;
+}
+.lg-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:20px;
+  margin-bottom:6px;
+}
+.lg-desc{font-size:13px;color:var(--mist);margin-bottom:24px;line-height:1.6}
+.lg-field{margin-bottom:14px}
+.lg-label{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--mist);margin-bottom:6px;display:block;
+}
+.lg-input{
+  width:100%;background:var(--card);border:1px solid var(--rim);border-radius:8px;
+  padding:13px 16px;font-size:14px;color:var(--bone);outline:none;
+  transition:border-color .25s,box-shadow .25s;letter-spacing:.5px;
+}
+.lg-input:focus{border-color:rgba(255,140,0,.5);box-shadow:0 0 0 3px rgba(255,140,0,.08)}
+.lg-input::placeholder{color:var(--mist);letter-spacing:0}
+.lg-error{
+  font-size:12px;color:var(--red);margin-bottom:12px;
+  display:none;padding:10px 14px;
+  background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.25);border-radius:6px;
+}
+.lg-error.show{display:block}
+.lg-btn{
+  width:100%;padding:15px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000;font-family:'Syne',sans-serif;font-weight:800;
+  font-size:14px;letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;transition:opacity .25s,transform .2s;
+  margin-top:4px;
+}
+.lg-btn:hover{opacity:.9;transform:translateY(-1px)}
+.lg-btn:active{transform:translateY(0)}
+.lg-btn.loading{opacity:.5;pointer-events:none}
+.lg-footer{
+  text-align:center;margin-top:20px;
+  font-size:11px;color:var(--mist);letter-spacing:.5px;
+}
+.lg-lock{font-size:40px;margin-bottom:20px;display:block;animation:lockBob 3s ease-in-out infinite}
+@keyframes lockBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* session indicator */
+.session-bar{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:9998;
+  background:rgba(0,232,122,.08);border-bottom:1px solid rgba(0,232,122,.2);
+  padding:6px 16px;font-size:11px;color:var(--green);letter-spacing:1px;
+  text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;
+}
+.session-bar.show{display:flex}
+.logout-btn{
+  background:transparent;border:1px solid rgba(255,68,85,.3);color:var(--red);
+  padding:3px 12px;border-radius:4px;font-size:10px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;text-transform:uppercase;
+}
+.logout-btn:hover{background:rgba(255,68,85,.1)}
+
+/* ══════════════════════════════════════
+   TOP BAR
+══════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(7,6,10,.94);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--rim);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;gap:16px;
+}
+.tb-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:17px;
+  background:linear-gradient(90deg,var(--bone),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  white-space:nowrap;
+}
+.tb-badge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.25);
+  padding:5px 12px;border-radius:20px;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);
+  white-space:nowrap;
+}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-view-btn{
+  padding:8px 18px;border-radius:6px;border:1px solid var(--rim);
+  background:transparent;color:var(--mist);font-size:12px;letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;font-weight:600;transition:all .2s;
+}
+.tb-view-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tb-prod-count{font-size:12px;color:var(--mist);white-space:nowrap}
+
+/* ══════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════ */
+.layout{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 57px);gap:0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.left-col{border-right:1px solid var(--rim);padding:28px;overflow-y:auto;min-height:0}
+@media(max-width:900px){.left-col{border-right:none;border-bottom:1px solid var(--rim)}}
+.right-col{padding:28px;overflow-y:auto;background:var(--panel)}
+
+/* ══════════════════════════════════════
+   SECTION HEADERS
+══════════════════════════════════════ */
+.sec-head{margin-bottom:22px}
+.sec-eye{font-family:'Syne Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sec-eye::before{content:'';width:24px;height:1px;background:var(--accent);display:inline-block}
+.sec-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px}
+
+/* ══════════════════════════════════════
+   FORM ELEMENTS
+══════════════════════════════════════ */
+.form-group{margin-bottom:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.form-row{grid-template-columns:1fr}}
+.form-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.form-label span{color:var(--red);font-size:12px}
+.form-input,.form-select,.form-textarea{
+  width:100%;background:var(--card);border:1px solid var(--rim);border-radius:8px;
+  padding:11px 14px;font-size:13px;color:var(--bone);outline:none;
+  transition:border-color .25s,box-shadow .25s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  border-color:rgba(255,140,0,.5);
+  box-shadow:0 0 0 3px rgba(255,140,0,.08);
+}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--mist)}
+.form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23706e88' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.form-select option{background:var(--card)}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.6}
+/* price input wrapper */
+.price-wrap{position:relative}
+.price-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;color:var(--accent);pointer-events:none}
+.price-wrap .form-input{padding-left:50px}
+/* size chips */
+.size-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.size-chip{
+  padding:6px 14px;border-radius:6px;border:1px solid var(--rim);
+  font-size:11px;font-weight:600;color:var(--mist);background:transparent;
+  cursor:pointer;transition:all .18s;letter-spacing:.5px;
+  user-select:none;
+}
+.size-chip.on{background:var(--ag);border-color:var(--accent);color:var(--accent)}
+.size-custom-row{display:flex;gap:8px;margin-top:8px}
+.size-custom-row .form-input{flex:1}
+.size-add-btn{padding:8px 14px;border-radius:6px;border:1px solid var(--rim);background:transparent;color:var(--mist);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.size-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ══════════════════════════════════════
+   PHOTO UPLOAD SECTION
+══════════════════════════════════════ */
+.photo-section{
+  background:var(--card);border:2px dashed var(--rim);border-radius:12px;
+  padding:0;overflow:hidden;transition:border-color .25s;
+  margin-bottom:20px;
+}
+.photo-section.drag-over{border-color:var(--accent);background:rgba(255,140,0,.04)}
+.photo-method-tabs{display:flex;border-bottom:1px solid var(--rim)}
+.pm-tab{
+  flex:1;padding:11px 8px;text-align:center;font-size:10px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;color:var(--mist);
+  background:transparent;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.pm-tab .pm-ico{font-size:14px}
+.pm-tab.on{color:var(--accent);border-bottom-color:var(--accent);background:rgba(255,140,0,.04)}
+.photo-pane{display:none;padding:20px}
+.photo-pane.on{display:block}
+
+/* DROP ZONE */
+.drop-zone{
+  border:2px dashed var(--rim);border-radius:10px;
+  padding:40px 20px;text-align:center;cursor:pointer;
+  transition:all .25s;position:relative;background:var(--bg);
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(255,140,0,.04)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:40px;margin-bottom:10px;display:block;animation:dzBob 3s ease-in-out infinite}
+@keyframes dzBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.dz-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px}
+.dz-sub{font-size:12px;color:var(--mist);line-height:1.6}
+.dz-sub strong{color:var(--accent)}
+.dz-formats{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.dz-fmt{background:var(--rim);padding:2px 8px;border-radius:4px;font-size:10px;letter-spacing:1px;color:var(--mist)}
+
+/* CAMERA */
+.camera-wrap{text-align:center}
+#cameraVideo{width:100%;border-radius:8px;background:#000;display:none;max-height:260px;object-fit:cover}
+#cameraCanvas{display:none}
+.camera-btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.cam-btn{
+  padding:10px 20px;border-radius:8px;border:none;font-size:12px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;
+}
+.cam-btn.start{background:var(--card);border:1px solid var(--rim);color:var(--mist)}
+.cam-btn.start:hover{border-color:var(--accent);color:var(--accent)}
+.cam-btn.snap{background:var(--accent);color:#000}
+.cam-btn.snap:hover{opacity:.9}
+.cam-btn.stop{background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.3);color:var(--red)}
+.cam-idle-msg{padding:40px 20px;text-align:center;color:var(--mist);font-size:13px}
+.cam-idle-ico{font-size:48px;display:block;margin-bottom:10px}
+
+/* URL */
+.url-wrap{display:flex;flex-direction:column;gap:10px}
+.url-row{display:flex;gap:8px}
+.url-row .form-input{flex:1}
+.url-fetch-btn{
+  padding:11px 18px;border-radius:8px;border:none;
+  background:var(--accent);color:#000;font-size:12px;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:opacity .2s;letter-spacing:.5px;
+}
+.url-fetch-btn:hover{opacity:.9}
+.url-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.url-eg{
+  font-size:10px;padding:3px 10px;border-radius:10px;
+  border:1px solid var(--rim);color:var(--mist);cursor:pointer;
+  transition:all .2s;letter-spacing:.5px;
+}
+.url-eg:hover{border-color:var(--accent);color:var(--accent)}
+.url-status{font-size:12px;color:var(--mist);text-align:center;padding:8px}
+
+/* PHOTO PREVIEW STRIP */
+.photo-preview-section{margin-bottom:20px;display:none}
+.photo-preview-section.has-photos{display:block}
+.pp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pp-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent)}
+.pp-clear-all{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;transition:opacity .2s}
+.pp-clear-all:hover{opacity:.7}
+.pp-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.pp-strip::-webkit-scrollbar{display:none}
+.pp-thumb{
+  flex-shrink:0;width:80px;height:100px;border-radius:8px;
+  overflow:hidden;position:relative;border:2px solid var(--rim);
+  cursor:pointer;transition:border-color .2s;
+}
+.pp-thumb.primary{border-color:var(--accent)}
+.pp-thumb.primary::before{
+  content:'★';position:absolute;top:4px;left:4px;z-index:2;
+  width:18px;height:18px;background:var(--accent);color:#000;
+  border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:center;justify-content:center;
+}
+.pp-thumb img{width:100%;height:100%;object-fit:cover}
+.pp-thumb-del{
+  position:absolute;top:3px;right:3px;z-index:2;
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(0,0,0,.75);border:none;color:#fff;
+  font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;
+}
+.pp-thumb:hover .pp-thumb-del{opacity:1}
+.pp-hint{font-size:11px;color:var(--mist);margin-top:6px;text-align:center}
+
+/* ══════════════════════════════════════
+   BADGE SELECTOR
+══════════════════════════════════════ */
+.badge-opts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.badge-opt{
+  padding:7px 16px;border-radius:6px;border:1px solid var(--rim);
+  font-size:11px;font-weight:700;color:var(--mist);background:transparent;
+  cursor:pointer;transition:all .2s;letter-spacing:.5px;
+}
+.badge-opt.on.hot{background:rgba(255,140,0,.15);border-color:var(--accent);color:var(--accent)}
+.badge-opt.on.new{background:rgba(237,232,224,.1);border-color:var(--bone);color:var(--bone)}
+.badge-opt.on.sale{background:rgba(255,68,85,.1);border-color:var(--red);color:var(--red)}
+.badge-opt.on.none{background:rgba(112,112,160,.1);border-color:var(--mist);color:var(--mist)}
+
+/* ══════════════════════════════════════
+   SUBMIT BUTTON
+══════════════════════════════════════ */
+.submit-row{display:flex;gap:10px;margin-top:24px}
+.submit-btn{
+  flex:1;padding:15px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000;font-family:'Syne',sans-serif;font-weight:800;
+  font-size:14px;letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.submit-btn:hover{opacity:.9;transform:translateY(-1px)}
+.submit-btn:active{transform:translateY(0)}
+.submit-btn.saving{opacity:.6;pointer-events:none}
+.reset-btn{
+  padding:15px 20px;border-radius:10px;border:1px solid var(--rim);
+  background:transparent;color:var(--mist);font-size:13px;
+  cursor:pointer;transition:all .2s;
+}
+.reset-btn:hover{border-color:var(--bone);color:var(--bone)}
+
+
+/* ── SEARCH TAB ── */
+.srch-hint{font-size:12px;color:var(--mist);margin-bottom:12px;line-height:1.65;background:rgba(255,140,0,.05);border:1px solid rgba(255,140,0,.15);border-radius:6px;padding:10px 12px}
+.srch-row{display:flex;gap:8px;margin-bottom:10px}
+.srch-row .form-input{flex:1;font-size:13px}
+.srch-btn{padding:10px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;letter-spacing:.5px}
+.srch-btn:hover{opacity:.9}
+.srch-btn:disabled{opacity:.45;cursor:not-allowed}
+.srch-quick{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.srch-tag{padding:5px 12px;border-radius:14px;border:1px solid var(--rim);font-size:10px;color:var(--mist);cursor:pointer;transition:all .2s;white-space:nowrap;background:transparent}
+.srch-tag:hover{border-color:var(--accent);color:var(--accent);background:var(--ag)}
+.srch-status{font-size:12px;color:var(--mist);text-align:center;padding:4px 0;min-height:24px;transition:color .3s}
+.srch-status.loading{color:var(--accent)}
+.srch-status.err{color:var(--red)}
+.srch-status.ok{color:var(--green)}
+.srch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:280px;overflow-y:auto;padding-right:2px}
+.srch-grid::-webkit-scrollbar{width:3px}
+.srch-grid::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+.srch-img-card{position:relative;aspect-ratio:4/5;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid var(--rim);transition:all .22s;background:var(--panel)}
+.srch-img-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.srch-img-card:hover img{transform:scale(1.06)}
+.srch-img-card:hover{border-color:var(--accent)}
+.srch-img-card.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,140,0,.22)}
+.srch-check{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:11px;font-weight:900;display:none;place-items:center}
+.srch-img-card.sel .srch-check{display:grid}
+.srch-img-card.ghost{background:var(--rim);animation:ghost 1.2s ease-in-out infinite}
+@keyframes ghost{0%,100%{opacity:.35}50%{opacity:.7}}
+
+/* ── QR CODE ── */
+.qr-section{background:var(--card);border:1px solid var(--rim);border-radius:12px;padding:20px;margin-bottom:20px}
+.qr-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px}
+.qr-sub{font-size:12px;color:var(--mist);margin-bottom:14px;line-height:1.65}
+.qr-url-row{display:flex;gap:8px;margin-bottom:12px}
+.qr-url-input{flex:1;background:var(--bg);border:1px solid var(--rim);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--bone);outline:none;transition:border-color .25s;font-family:'Syne Mono',monospace}
+.qr-url-input:focus{border-color:rgba(255,140,0,.4)}
+.qr-gen-btn{padding:10px 18px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.qr-gen-btn:hover{opacity:.9}
+.qr-display{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--rim);border-radius:10px;padding:18px}
+.qr-canvas-wrap{background:#fff;border-radius:8px;padding:10px;display:inline-block;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+#qrCanvas{display:block}
+.qr-label{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent);letter-spacing:.5px;text-align:center}
+.qr-url-show{font-size:10px;color:var(--mist);text-align:center;font-family:'Syne Mono',monospace;word-break:break-all;max-width:220px}
+.qr-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.qr-action-btn{padding:8px 16px;border-radius:6px;border:1px solid var(--rim);background:transparent;color:var(--mist);font-size:11px;cursor:pointer;transition:all .2s}
+.qr-action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.qr-action-btn.dl{background:var(--accent);color:#000;border-color:var(--accent)}
+.qr-placeholder{text-align:center;padding:28px;color:var(--mist);font-size:12px;line-height:1.7}
+.qr-placeholder-ico{font-size:36px;display:block;margin-bottom:8px;animation:dzBob 3s ease-in-out infinite}
+
+/* ══════════════════════════════════════
+   RIGHT COLUMN — PRODUCT LIST
+══════════════════════════════════════ */
+.prod-list-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:10px;
+}
+.search-filter{display:flex;gap:8px;flex-wrap:wrap}
+.list-search{
+  background:var(--card);border:1px solid var(--rim);border-radius:8px;
+  padding:9px 14px;font-size:13px;color:var(--bone);outline:none;
+  width:200px;transition:border-color .25s;
+}
+.list-search:focus{border-color:rgba(255,140,0,.4)}
+.list-search::placeholder{color:var(--mist)}
+.filter-select{
+  background:var(--card);border:1px solid var(--rim);border-radius:8px;
+  padding:9px 14px;font-size:12px;color:var(--mist);outline:none;cursor:pointer;
+}
+.prod-list{display:flex;flex-direction:column;gap:10px}
+/* product card */
+.prod-card{
+  background:var(--card);border:1px solid var(--rim);border-radius:12px;
+  overflow:hidden;transition:border-color .25s,transform .25s;
+  display:flex;
+}
+.prod-card:hover{border-color:rgba(255,140,0,.3);transform:translateX(3px)}
+.prod-card-photo{
+  width:90px;height:110px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.prod-card-photo img{width:100%;height:100%;object-fit:cover}
+.prod-card-photo-fallback{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:32px;
+}
+.prod-card-body{flex:1;padding:12px 14px;min-width:0;display:flex;flex-direction:column}
+.prod-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.prod-card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prod-card-actions{display:flex;gap:5px;flex-shrink:0}
+.pca-btn{
+  width:30px;height:30px;border-radius:6px;border:1px solid var(--rim);
+  background:var(--panel);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s;
+}
+.pca-btn:hover{border-color:var(--accent);transform:scale(1.1)}
+.pca-btn.del:hover{border-color:var(--red)}
+.prod-card-meta{font-size:11px;color:var(--mist);margin-bottom:6px;display:flex;flex-wrap:wrap;gap:6px}
+.meta-tag{background:rgba(255,255,255,.04);padding:2px 8px;border-radius:10px;white-space:nowrap}
+.prod-card-bottom{margin-top:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.prod-price-main{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--accent)}
+.prod-price-was{font-size:11px;color:var(--mist);text-decoration:line-through;margin-left:6px}
+.prod-badge-tag{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:4px}
+.badge-hot{background:rgba(255,140,0,.15);color:var(--accent)}
+.badge-new{background:rgba(237,232,224,.1);color:var(--bone)}
+.badge-sale{background:rgba(255,68,85,.12);color:var(--red)}
+.prod-photo-count{font-size:10px;color:var(--mist);display:flex;align-items:center;gap:4px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--mist)}
+.empty-ico{font-size:48px;display:block;margin-bottom:12px;animation:dzBob 3s ease-in-out infinite}
+.empty-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--bone);margin-bottom:6px}
+.empty-sub{font-size:13px;line-height:1.6}
+
+/* ══════════════════════════════════════
+   STATS BAR
+══════════════════════════════════════ */
+.stats-bar{
+  display:flex;gap:0;overflow-x:auto;margin-bottom:20px;
+  border:1px solid var(--rim);border-radius:10px;overflow:hidden;
+}
+.stats-bar::-webkit-scrollbar{display:none}
+.stat-cell{flex:1;min-width:80px;padding:14px 10px;text-align:center;border-right:1px solid var(--rim)}
+.stat-cell:last-child{border-right:none}
+.stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--accent);display:block;line-height:1}
+.stat-l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);margin-top:4px}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  z-index:9000;background:var(--card);border:1px solid var(--rim);
+  border-left:3px solid var(--accent);padding:14px 24px;border-radius:8px;
+  font-size:13px;font-weight:600;opacity:0;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 8px 40px rgba(0,0,0,.6);pointer-events:none;
+  white-space:nowrap;max-width:90vw;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-left-color:var(--green)}
+#toast.err{border-left-color:var(--red)}
+
+/* ══════════════════════════════════════
+   DELETE CONFIRM MODAL
+══════════════════════════════════════ */
+#confirmModal{
+  position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;
+}
+#confirmModal.open{display:flex}
+.confirm-box{
+  background:var(--card);border:1px solid var(--rim);border-radius:14px;
+  padding:28px;max-width:340px;width:100%;text-align:center;
+  animation:confIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes confIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.conf-ico{font-size:44px;margin-bottom:12px;display:block}
+.conf-title{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin-bottom:8px}
+.conf-sub{font-size:13px;color:var(--mist);margin-bottom:22px;line-height:1.6}
+.conf-btns{display:flex;gap:10px}
+.conf-cancel{flex:1;padding:12px;border-radius:8px;border:1px solid var(--rim);background:transparent;color:var(--mist);font-size:13px;cursor:pointer;transition:all .2s}
+.conf-cancel:hover{border-color:var(--bone);color:var(--bone)}
+.conf-delete{flex:1;padding:12px;border-radius:8px;border:none;background:rgba(255,68,85,.15);border:1px solid rgba(255,68,85,.35);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.conf-delete:hover{background:rgba(255,68,85,.25)}
+
+/* ══════════════════════════════════════
+   EDIT MODAL
+══════════════════════════════════════ */
+#editModal{
+  position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.85);
+  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px;
+}
+#editModal.open{display:flex}
+.edit-box{
+  background:var(--card);border:1px solid var(--rim);border-radius:14px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  animation:confIn .35s cubic-bezier(.34,1.56,.64,1);
+}
+.edit-head{
+  padding:18px 22px;border-bottom:1px solid var(--rim);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:var(--card);z-index:2;
+}
+.edit-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px}
+.edit-close{background:none;border:none;font-size:22px;color:var(--mist);cursor:pointer}
+.edit-body{padding:22px}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:600px){
+  .topbar{padding:12px 16px}
+  .left-col,.right-col{padding:16px}
+  .tb-badge{display:none}
+}
+
+/* ══════════════════════════════════════
+   MOBILE — ADMIN PANEL
+══════════════════════════════════════ */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  body{padding-bottom:env(safe-area-inset-bottom)}
+  .topbar{padding-top:max(14px,env(safe-area-inset-top))}
+}
+@media(max-width:900px){
+  /* Topbar */
+  .tb-logo{font-size:15px}
+  .tb-prod-count{display:none}
+  .tb-view-btn{padding:7px 12px;font-size:11px}
+  /* Layout stacks vertically */
+  .left-col{padding:16px;max-height:none;overflow-y:visible}
+  .right-col{padding:16px;background:var(--bg)}
+  /* Photo tabs — scrollable */
+  .photo-method-tabs{overflow-x:auto;flex-wrap:nowrap}
+  .photo-method-tabs::-webkit-scrollbar{display:none}
+  .pm-tab{flex-shrink:0;padding:11px 14px;font-size:9px}
+  .pm-ico{font-size:16px}
+  /* Search grid — 3 cols on tablet, 2 on phone */
+  .srch-grid{grid-template-columns:repeat(3,1fr)}
+  .srch-quick{gap:5px}
+  .srch-tag{font-size:9px;padding:4px 10px}
+  /* QR */
+  .qr-url-row{flex-direction:column}
+  .qr-gen-btn{width:100%;padding:12px}
+  .qr-actions{flex-direction:row}
+  /* Product list */
+  .prod-card-photo{width:76px;height:92px}
+  .prod-card-name{font-size:13px}
+  .prod-card-bottom{flex-direction:column;align-items:flex-start;gap:4px}
+  /* Stats bar */
+  .stat-cell{padding:10px 8px;min-width:60px}
+  .stat-n{font-size:18px}
+  .stat-l{font-size:8px;letter-spacing:1px}
+  /* Form */
+  .form-row{grid-template-columns:1fr 1fr}
+  .sec-title{font-size:18px}
+  /* session bar */
+  .session-bar{font-size:10px;padding:5px 12px}
+  .logout-btn{font-size:9px;padding:3px 8px}
+}
+@media(max-width:600px){
+  /* Full phone layout */
+  .topbar{padding:10px 14px}
+  .left-col,.right-col{padding:14px}
+  /* Photo section */
+  .drop-zone{padding:28px 14px}
+  .dz-icon{font-size:32px}
+  .dz-title{font-size:13px}
+  .dz-sub{font-size:11px}
+  /* Search 2 cols */
+  .srch-grid{grid-template-columns:repeat(2,1fr);max-height:240px}
+  /* Form elements — 16px to prevent iOS zoom */
+  .form-input,.form-select,.form-textarea{font-size:16px !important;padding:11px 12px}
+  .form-row{grid-template-columns:1fr}
+  /* Size chips */
+  .size-chips{gap:5px}
+  .size-chip{padding:7px 12px;font-size:11px}
+  /* Submit */
+  .submit-btn{font-size:13px;padding:14px}
+  /* Product cards */
+  .prod-card{border-radius:8px}
+  .prod-card-photo{width:68px;height:84px}
+  .prod-card-name{font-size:12px;white-space:normal}
+  .prod-card-meta{gap:4px}
+  .meta-tag{font-size:9px;padding:1px 6px}
+  .prod-price-main{font-size:15px}
+  /* Photo strip */
+  .pp-thumb{width:68px;height:84px}
+  /* Search */
+  .srch-row{flex-direction:row}
+  .srch-btn{padding:10px 12px;font-size:11px}
+  /* QR */
+  .qr-section{padding:16px}
+  .qr-title{font-size:14px}
+  #qrCanvas{width:180px !important;height:180px !important}
+  /* list search */
+  .list-search{width:100%}
+  .search-filter{flex-direction:column}
+  .filter-select{width:100%}
+  /* Camera */
+  .cam-btn{padding:9px 14px;font-size:11px}
+  /* Edit/confirm modals */
+  .edit-box{border-radius:20px 20px 0 0;max-height:92svh}
+  .confirm-box{padding:22px 18px}
+  .conf-title{font-size:16px}
+}
+@media(max-width:380px){
+  .pm-tab{padding:10px 10px;font-size:8px}
+  .srch-grid{grid-template-columns:repeat(2,1fr);max-height:200px}
+  .stat-n{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- SESSION BAR (shown when logged in) -->
+<div class="session-bar" id="sessionBar">
+  <span>🔐 Admin Session Active — Drip Closet</span>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<!-- LOGIN GATE -->
+<div id="loginGate">
+  <div class="lg-logo">Drip Closet</div>
+  <div class="lg-sub">Admin Portal</div>
+  <div class="lg-box">
+    <span class="lg-lock">🔐</span>
+    <div class="lg-title">Admin Access Only</div>
+    <div class="lg-desc">This area is restricted to store administrators. Enter your credentials to manage products and inventory.</div>
+    <div class="lg-field">
+      <label class="lg-label">Username</label>
+      <input class="lg-input" id="lgUser" type="text" placeholder="admin" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('lgPass').focus()">
+    </div>
+    <div class="lg-field">
+      <label class="lg-label">Password</label>
+      <input class="lg-input" id="lgPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="lg-error" id="lgError">Incorrect username or password. Please try again.</div>
+    <button class="lg-btn" id="lgBtn" onclick="doLogin()">Sign In →</button>
+    <div class="lg-footer">🔒 Secured admin panel · Drip Closet</div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="adminApp" style="display:none">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-logo">Drip Closet Admin</div>
+  <div class="tb-badge">⚙️ Product Manager</div>
+  <div class="tb-right">
+    <div class="tb-prod-count" id="prodCountLabel">0 products</div>
+    <button class="tb-view-btn" onclick="window.open('drip_closet_website.html','_blank')">View Store →</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT: ADD / EDIT PRODUCT FORM -->
+  <div class="left-col">
+    <div class="sec-head">
+      <div class="sec-eye">New Product</div>
+      <div class="sec-title" id="formTitle">Add to Closet</div>
+    </div>
+
+    <!-- PHOTO SECTION -->
+    <div style="margin-bottom:6px">
+      <div class="form-label">Product Photos <span style="color:var(--mist);font-size:10px;text-transform:none;letter-spacing:0">(select primary by tapping ★)</span></div>
+    </div>
+
+    <!-- Photo preview strip -->
+    <div class="photo-preview-section" id="photoPreviewSection">
+      <div class="pp-head">
+        <div class="pp-title">📸 <span id="photoCountLabel">0</span> photo(s) added</div>
+        <button class="pp-clear-all" onclick="clearAllPhotos()">Clear All</button>
+      </div>
+      <div class="pp-strip" id="photoStrip"></div>
+      <div class="pp-hint">Tap a photo to make it the primary (★). Tap ✕ to remove it.</div>
+    </div>
+
+    <!-- Photo method tabs -->
+    <div class="photo-section" id="photoSection">
+      <div class="photo-method-tabs">
+        <button class="pm-tab on" onclick="photoTab('upload',this)"><span class="pm-ico">📁</span>Upload</button>
+        <button class="pm-tab" onclick="photoTab('camera',this)"><span class="pm-ico">📷</span>Camera</button>
+        <button class="pm-tab" onclick="photoTab('search',this)"><span class="pm-ico">🔍</span>Search</button>
+        <button class="pm-tab" onclick="photoTab('url',this)"><span class="pm-ico">🌐</span>URL</button>
+      </div>
+
+      <!-- UPLOAD -->
+      <div class="photo-pane on" id="pane-upload">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFileSelect(this.files)">
+          <span class="dz-icon">🖼️</span>
+          <div class="dz-title">Drag & Drop photos here</div>
+          <div class="dz-sub">or <strong>tap to browse</strong> from your device<br>You can upload multiple photos at once</div>
+          <div class="dz-formats">
+            <span class="dz-fmt">JPG</span><span class="dz-fmt">PNG</span>
+            <span class="dz-fmt">WEBP</span><span class="dz-fmt">HEIC</span>
+            <span class="dz-fmt">GIF</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMERA -->
+      <div class="photo-pane" id="pane-camera">
+        <div class="camera-wrap">
+          <div class="cam-idle-msg" id="camIdleMsg">
+            <span class="cam-idle-ico">📷</span>
+            Take a product photo using your phone or laptop camera
+          </div>
+          <video id="cameraVideo" autoplay playsinline></video>
+          <canvas id="cameraCanvas"></canvas>
+          <div class="camera-btns">
+            <button class="cam-btn start" onclick="startCamera()" id="startCamBtn">Start Camera</button>
+            <button class="cam-btn snap" onclick="snapPhoto()" id="snapBtn" style="display:none">📸 Take Photo</button>
+            <button class="cam-btn stop" onclick="stopCamera()" id="stopBtn" style="display:none">Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH (Unsplash free API - 50 requests/hour, no key needed via proxy) -->
+      <div class="photo-pane" id="pane-search">
+        <div class="srch-wrap">
+          <div class="srch-hint">Search real clothing photos from Unsplash. Type a keyword and tap Search.</div>
+          <div class="srch-row">
+            <input class="form-input" id="srchInput" placeholder="e.g. orange hoodie streetwear Kenya" autocomplete="off"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();doImageSearch()}">
+            <button class="srch-btn" onclick="doImageSearch()" id="srchBtn">🔍 Search</button>
+          </div>
+          <div class="srch-quick">
+            <span class="srch-tag" onclick="quickSearch('oversized hoodie black')">Black Hoodie</span>
+            <span class="srch-tag" onclick="quickSearch('cargo pants streetwear')">Cargo Pants</span>
+            <span class="srch-tag" onclick="quickSearch('bomber jacket fashion')">Bomber</span>
+            <span class="srch-tag" onclick="quickSearch('african streetwear nairobi')">Nairobi Drip</span>
+            <span class="srch-tag" onclick="quickSearch('bodycon dress fashion')">Dress</span>
+            <span class="srch-tag" onclick="quickSearch('matching set co-ord outfit')">Co-ord Set</span>
+            <span class="srch-tag" onclick="quickSearch('denim jacket outfit')">Denim</span>
+            <span class="srch-tag" onclick="quickSearch('crop top streetwear')">Crop Top</span>
+          </div>
+          <div class="srch-status" id="srchStatus"></div>
+          <div class="srch-grid" id="srchGrid"></div>
+        </div>
+      </div>
+
+      <!-- URL -->
+      <div class="photo-pane" id="pane-url">
+        <div class="url-wrap">
+          <div class="srch-hint">Paste any direct image link — from Instagram, Google Drive, Jumia, or anywhere on the web.</div>
+          <div class="url-row">
+            <input class="form-input" id="urlInput" placeholder="https://example.com/photo.jpg" type="url">
+            <button class="url-fetch-btn" onclick="addFromUrl()">Add Photo</button>
+          </div>
+          <div class="url-examples">
+            <div class="url-eg" onclick="fillUrlExample('https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600')">Hoodie Example</div>
+            <div class="url-eg" onclick="fillUrlExample('https://images.unsplash.com/photo-1594938298603-c8148c4b2ebe?w=600')">Dress Example</div>
+            <div class="url-eg" onclick="fillUrlExample('https://images.unsplash.com/photo-1542272604-787c3835535d?w=600')">Cargo Example</div>
+          </div>
+          <div class="url-status" id="urlStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT DETAILS FORM -->
+    <form onsubmit="event.preventDefault();saveProduct()">
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Product Name <span>*</span></div>
+          <input class="form-input" id="fName" placeholder="e.g. Void Hoodie" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Category</div>
+          <input class="form-input" id="fCat" placeholder="e.g. Hoodies" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Price (KES) <span>*</span></div>
+          <div class="price-wrap">
+            <span class="price-prefix">KES</span>
+            <input class="form-input" id="fPrice" type="number" placeholder="8,900" min="0" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Original Price (optional)</div>
+          <div class="price-wrap">
+            <span class="price-prefix">KES</span>
+            <input class="form-input" id="fWas" type="number" placeholder="11,000" min="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Gender</div>
+          <select class="form-select" id="fGender">
+            <option value="unisex">Unisex</option>
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Clothing Type</div>
+          <select class="form-select" id="fShape">
+            <option value="hoodie">Hoodie</option>
+            <option value="tee">T-Shirt</option>
+            <option value="cargo">Cargo Pants</option>
+            <option value="bomber">Bomber Jacket</option>
+            <option value="denim">Denim Jacket</option>
+            <option value="dress">Dress</option>
+            <option value="set">Co-ord Set</option>
+            <option value="crop">Cropped Top</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Available Sizes</div>
+        <div class="size-chips" id="sizeChips">
+          <div class="size-chip" onclick="toggleSize(this,'XS')">XS</div>
+          <div class="size-chip on" onclick="toggleSize(this,'S')">S</div>
+          <div class="size-chip on" onclick="toggleSize(this,'M')">M</div>
+          <div class="size-chip on" onclick="toggleSize(this,'L')">L</div>
+          <div class="size-chip on" onclick="toggleSize(this,'XL')">XL</div>
+          <div class="size-chip" onclick="toggleSize(this,'XXL')">XXL</div>
+          <div class="size-chip" onclick="toggleSize(this,'One Size')">One Size</div>
+        </div>
+        <div class="size-custom-row">
+          <input class="form-input" id="customSizeInput" placeholder="Add custom size e.g. 3XL" style="height:36px;font-size:12px">
+          <button type="button" class="size-add-btn" onclick="addCustomSize()">+ Add</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Badge</div>
+        <div class="badge-opts">
+          <button type="button" class="badge-opt none on" onclick="setBadge('none',this)">No Badge</button>
+          <button type="button" class="badge-opt new" onclick="setBadge('new',this)">🆕 NEW</button>
+          <button type="button" class="badge-opt hot" onclick="setBadge('hot',this)">🔥 HOT</button>
+          <button type="button" class="badge-opt sale" onclick="setBadge('sale',this)">💰 SALE</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Description (optional)</div>
+        <textarea class="form-textarea" id="fDesc" placeholder="Describe the fabric, fit, feel… e.g. 400gsm heavyweight cotton fleece with dropped shoulders and a kangaroo pocket."></textarea>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Stock Quantity</div>
+        <input class="form-input" id="fStock" type="number" placeholder="20" min="0" value="20">
+      </div>
+
+      <div class="submit-row">
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span id="submitBtnTxt">✚ Add to Closet</span>
+        </button>
+        <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- RIGHT: PRODUCT LIST + QR CODE -->
+  <div class="right-col">
+    <div class="prod-list-head">
+      <div>
+        <div class="sec-eye">Inventory</div>
+        <div class="sec-title">Your Closet</div>
+      </div>
+    </div>
+
+    <!-- QR CODE SECTION -->
+    <div class="qr-section">
+      <div class="qr-title">📱 Store QR Code</div>
+      <div class="qr-sub">Generate a QR code customers can scan with their phone to open your Drip Closet store instantly. Place it on flyers, receipts, business cards, or at your market stall.</div>
+      <div class="qr-url-row">
+        <input class="qr-url-input" id="qrUrlInput" placeholder="Paste your store URL e.g. https://yourstore.netlify.app" type="url">
+        <button class="qr-gen-btn" onclick="generateQR()">Generate QR</button>
+      </div>
+      <div id="qrOutput">
+        <div class="qr-placeholder">
+          <span class="qr-placeholder-ico">📲</span>
+          Enter your store URL above and tap <strong style="color:var(--accent)">Generate QR</strong> to create a scannable QR code for your customers.
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Search & Filter -->
+    <div class="search-filter" style="margin-bottom:16px">
+      <input class="list-search" id="listSearch" placeholder="🔍  Search products…" oninput="renderList()">
+      <select class="filter-select" id="listGender" onchange="renderList()">
+        <option value="">All Genders</option>
+        <option value="men">Men</option>
+        <option value="women">Women</option>
+        <option value="unisex">Unisex</option>
+      </select>
+    </div>
+
+    <div class="prod-list" id="prodList"></div>
+  </div>
+
+</div><!-- /layout -->
+</div><!-- /adminApp -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <span class="conf-ico">🗑️</span>
+    <div class="conf-title">Delete Product?</div>
+    <div class="conf-sub" id="confSubText">This will permanently remove the product and all its photos from your closet.</div>
+    <div class="conf-btns">
+      <button class="conf-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="conf-delete" onclick="confirmDelete()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-box">
+    <div class="edit-head">
+      <div class="edit-title">✏️ Edit Product</div>
+      <button class="edit-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="edit-body" id="editBody"></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   AUTH — Admin Login
+   Default credentials: admin / dripcloset2025
+   Change ADMIN_USER and ADMIN_HASH below to customise.
+   ADMIN_HASH is SHA-256 of your password.
+   To generate a new hash: https://emn178.github.io/online-tools/sha256.html
+════════════════════════════════════ */
+const ADMIN_USER='admin';
+// SHA-256 of "dripcloset2025"
+const ADMIN_HASH='0e1e619e9e0d2807d51ec271b9b0bbebc8166e110c982a240b597dd817047878';
+const SESSION_KEY='dc_admin_session_v1';
+const SESSION_DURATION=8*60*60*1000; // 8 hours
+
+/* ── Simple hash (djb2 + sha-256 via SubtleCrypto for security) ── */
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ── Check if session is valid ── */
+function isLoggedIn(){
+  try{
+    const s=JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    if(!s)return false;
+    if(Date.now()-s.ts>SESSION_DURATION){sessionStorage.removeItem(SESSION_KEY);return false;}
+    return s.auth===true;
+  }catch{return false;}
+}
+
+/* ── Boot: show gate or app ── */
+function boot(){
+  if(isLoggedIn()){showApp();}
+  else{document.getElementById('loginGate').classList.remove('gone');}
+}
+
+/* ── Login handler ── */
+async function doLogin(){
+  const user=document.getElementById('lgUser').value.trim();
+  const pass=document.getElementById('lgPass').value;
+  const btn=document.getElementById('lgBtn');
+  const err=document.getElementById('lgError');
+  err.classList.remove('show');
+  if(!user||!pass){err.textContent='Please enter your username and password.';err.classList.add('show');return;}
+  btn.classList.add('loading');btn.textContent='Verifying…';
+  await new Promise(r=>setTimeout(r,500)); // slight delay — feels more secure
+  const hash=await sha256(pass);
+  if(user===ADMIN_USER&&hash===ADMIN_HASH){
+    sessionStorage.setItem(SESSION_KEY,JSON.stringify({auth:true,ts:Date.now(),user}));
+    showApp();
+  }else{
+    err.textContent='Incorrect username or password. Please try again.';
+    err.classList.add('show');
+    btn.classList.remove('loading');btn.textContent='Sign In →';
+    document.getElementById('lgPass').value='';
+    document.getElementById('lgPass').focus();
+    // shake animation
+    const box=document.querySelector('.lg-box');
+    box.style.animation='shake .4s ease';
+    setTimeout(()=>box.style.animation='',450);
+  }
+}
+
+function showApp(){
+  document.getElementById('loginGate').classList.add('gone');
+  document.getElementById('adminApp').style.display='block';
+  document.getElementById('sessionBar').classList.add('show');
+  // nudge topbar down to make room for session bar
+  const tb=document.getElementById('mainTopbar');
+  if(tb)tb.style.top='35px';
+  init();
+}
+
+function logout(){
+  if(!confirm('End admin session and log out?'))return;
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+/* ── Shake animation ── */
+const shakeStyle=document.createElement('style');
+shakeStyle.textContent='@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}';
+document.head.appendChild(shakeStyle);
+
+/* ════════════════════════════════════
+   STORAGE
+════════════════════════════════════ */
+const PROD_KEY='dc_web_products_v1';
+function loadProds(){
+  try{const s=JSON.parse(localStorage.getItem(PROD_KEY));return Array.isArray(s)&&s.length?s:[];}
+  catch{return[];}
+}
+function saveProds(p){localStorage.setItem(PROD_KEY,JSON.stringify(p));}
+let prods=loadProds();
+
+/* ════════════════════════════════════
+   PHOTO STATE
+════════════════════════════════════ */
+let photos=[];        // [{dataUrl,name}]
+let primaryIdx=0;
+let editingId=null;
+let pendingDeleteId=null;
+let selectedBadge='none';
+let cameraStream=null;
+
+/* ════════════════════════════════════
+   PHOTO TABS
+════════════════════════════════════ */
+function photoTab(t,btn){
+  document.querySelectorAll('.pm-tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.photo-pane').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('pane-'+t).classList.add('on');
+  if(t!=='camera')stopCamera();
+}
+
+/* ════════════════════════════════════
+   FILE UPLOAD (including drag & drop)
+════════════════════════════════════ */
+const dropZone=document.getElementById('dropZone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault();dropZone.classList.remove('drag-over');
+  handleFileSelect(e.dataTransfer.files);
+});
+
+function handleFileSelect(files){
+  if(!files||!files.length)return;
+  let loaded=0;
+  Array.from(files).forEach(file=>{
+    if(!file.type.startsWith('image/')){toast('Only image files allowed','err');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      photos.push({dataUrl:e.target.result,name:file.name});
+      loaded++;
+      if(loaded===files.length){
+        renderPhotoStrip();
+        toast(`✔ ${loaded} photo${loaded>1?'s':''} added`,'ok');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  // reset file input so same file can be re-selected
+  document.getElementById('fileInput').value='';
+}
+
+/* ════════════════════════════════════
+   CAMERA
+════════════════════════════════════ */
+async function startCamera(){
+  try{
+    cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    const v=document.getElementById('cameraVideo');
+    v.srcObject=cameraStream;v.style.display='block';
+    document.getElementById('camIdleMsg').style.display='none';
+    document.getElementById('startCamBtn').style.display='none';
+    document.getElementById('snapBtn').style.display='inline-flex';
+    document.getElementById('stopBtn').style.display='inline-flex';
+  }catch(e){toast('Camera not available on this device','err');}
+}
+function snapPhoto(){
+  const v=document.getElementById('cameraVideo');
+  const c=document.getElementById('cameraCanvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  const dataUrl=c.toDataURL('image/jpeg',.9);
+  photos.push({dataUrl,name:'Camera Photo '+(photos.length+1)});
+  renderPhotoStrip();
+  toast('📸 Photo captured!','ok');
+}
+function stopCamera(){
+  if(cameraStream)cameraStream.getTracks().forEach(t=>t.stop());
+  cameraStream=null;
+  const v=document.getElementById('cameraVideo');
+  v.style.display='none';v.srcObject=null;
+  document.getElementById('camIdleMsg').style.display='block';
+  document.getElementById('startCamBtn').style.display='inline-flex';
+  document.getElementById('snapBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='none';
+}
+
+/* ════════════════════════════════════
+   URL / LINK PHOTO
+════════════════════════════════════ */
+function fillUrlExample(url){
+  document.getElementById('urlInput').value=url;
+  document.getElementById('urlStatus').textContent='URL pasted — tap Add Photo to use it.';
+}
+
+function addFromUrl(){
+  const url=document.getElementById('urlInput').value.trim();
+  if(!url){toast('Please paste an image URL','err');return;}
+  const status=document.getElementById('urlStatus');
+  status.className='url-status';status.textContent='Loading image…';
+  // First try: just store the URL directly and test if it renders
+  const testImg=new Image();
+  testImg.onload=()=>{
+    // URL works — store directly (avoids CORS canvas issues entirely)
+    photos.push({dataUrl:url,name:'URL Photo '+(photos.length+1),isUrl:true});
+    renderPhotoStrip();
+    document.getElementById('urlInput').value='';
+    status.textContent='✔ Photo added successfully';
+    setTimeout(()=>status.textContent='',2000);
+    toast('✔ Photo added from URL','ok');
+  };
+  testImg.onerror=()=>{
+    status.className='url-status err';
+    status.textContent='❌ Could not load that URL. Make sure it is a direct link to an image file (ends in .jpg, .png, .webp etc).';
+  };
+  testImg.src=url+'?t='+Date.now(); // cache bust
+}
+
+/* ════════════════════════════════════
+   IMAGE SEARCH — Unsplash free source endpoint
+   No API key required. Returns real clothing photos.
+════════════════════════════════════ */
+let _srchTimer=null;
+const SRCH_SEEDS=12; // number of images to show
+
+function quickSearch(q){
+  document.getElementById('srchInput').value=q;
+  doImageSearch();
+}
+
+function doImageSearch(){
+  clearTimeout(_srchTimer);
+  const q=document.getElementById('srchInput').value.trim();
+  const btn=document.getElementById('srchBtn');
+  const status=document.getElementById('srchStatus');
+  const grid=document.getElementById('srchGrid');
+  if(!q){status.className='srch-status err';status.textContent='Type a search term first.';return;}
+  btn.disabled=true;
+  status.className='srch-status loading';status.textContent='Searching for "'+q+'"…';
+  // Show skeleton placeholders
+  grid.innerHTML=Array.from({length:SRCH_SEEDS},()=>'<div class="srch-img-card ghost"></div>').join('');
+  _srchTimer=setTimeout(()=>{
+    // Unsplash Source API: returns random photo matching query — no key, free
+    // Each sig parameter gives a different photo for the same query
+    const encodedQ=encodeURIComponent(q);
+    const imgs=[];
+    let loaded=0;
+    grid.innerHTML='';
+    for(let i=0;i<SRCH_SEEDS;i++){
+      const url=`https://source.unsplash.com/300x400/?${encodedQ}&sig=${Date.now()+i}`;
+      const card=document.createElement('div');
+      card.className='srch-img-card';
+      card.innerHTML=`<img src="" alt="photo ${i+1}" loading="lazy"><div class="srch-check">✓</div>`;
+      const img=card.querySelector('img');
+      img.onload=()=>{
+        loaded++;
+        if(loaded===1){status.className='srch-status ok';status.textContent=`✔ Found photos for "${q}" — tap to select`;}
+        card.classList.remove('ghost');
+      };
+      img.onerror=()=>{card.style.display='none';};
+      // Use naturalUrl after redirect — store the redirected URL
+      img.src=url;
+      card.onclick=()=>selectSearchImg(url,card,img);
+      grid.appendChild(card);
+    }
+    btn.disabled=false;
+    if(loaded===0)setTimeout(()=>{
+      if(status.className.includes('loading')){
+        status.className='srch-status err';
+        status.textContent='No photos loaded. Check your internet connection and try again.';
+      }
+    },8000);
+  },400);
+}
+
+function selectSearchImg(url,card,imgEl){
+  // deselect all
+  document.querySelectorAll('.srch-img-card').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+  // Use the rendered img src (after Unsplash redirect) for best quality
+  const finalUrl=imgEl.currentSrc||imgEl.src||url;
+  photos.push({dataUrl:finalUrl,name:'Search Photo '+(photos.length+1),isUrl:true});
+  renderPhotoStrip();
+  toast('✔ Photo selected from search','ok');
+  // switch to show strip
+  const status=document.getElementById('srchStatus');
+  status.className='srch-status ok';
+  status.textContent='✔ Added! Tap another to add more, or fill in product details below.';
+}
+
+/* ════════════════════════════════════
+   QR CODE GENERATOR
+   Uses qrcode.js via CDN — pure JS, no server needed
+════════════════════════════════════ */
+function generateQR(){
+  const url=document.getElementById('qrUrlInput').value.trim();
+  if(!url){toast('Please enter your store URL first','err');return;}
+  if(!url.startsWith('http')){toast('URL must start with http:// or https://','err');return;}
+  const out=document.getElementById('qrOutput');
+  out.innerHTML=`<div class="qr-display">
+    <div class="qr-canvas-wrap"><canvas id="qrCanvas" width="220" height="220"></canvas></div>
+    <div class="qr-label">Drip Closet</div>
+    <div class="qr-url-show">${url}</div>
+    <div class="qr-actions">
+      <button class="qr-action-btn dl" onclick="downloadQR()">⬇ Download PNG</button>
+      <button class="qr-action-btn" onclick="printQR()">🖨 Print</button>
+      <button class="qr-action-btn" onclick="copyQRUrl()">📋 Copy URL</button>
+    </div>
+  </div>`;
+  // Draw QR using qrcodejs
+  if(typeof QRCode==='undefined'){
+    // Load library dynamically
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    script.onload=()=>drawQR(url);
+    script.onerror=()=>drawQRFallback(url);
+    document.head.appendChild(script);
+  }else{
+    drawQR(url);
+  }
+}
+
+function drawQR(url){
+  const canvas=document.getElementById('qrCanvas');
+  if(!canvas)return;
+  // Clear canvas
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,220,220);
+  try{
+    new QRCode(canvas,{
+      text:url,width:220,height:220,
+      colorDark:'#08070a',colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.H
+    });
+    // Add Drip Closet logo in centre
+    setTimeout(()=>{
+      const ctx2=canvas.getContext('2d');
+      const cx=110,cy=110,r=22;
+      ctx2.beginPath();ctx2.arc(cx,cy,r,0,2*Math.PI);
+      ctx2.fillStyle='#ff8c00';ctx2.fill();
+      ctx2.fillStyle='#000';ctx2.font='bold 11px sans-serif';
+      ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.fillText('DC',cx,cy);
+    },100);
+  }catch(e){drawQRFallback(url);}
+}
+
+function drawQRFallback(url){
+  // Simple fallback: draw a styled box with the URL
+  const canvas=document.getElementById('qrCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,220,220);
+  ctx.fillStyle='#ff8c00';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('QR CODE',110,100);
+  ctx.fillStyle='#333';ctx.font='10px sans-serif';
+  ctx.fillText('Library failed to load.',110,130);
+  ctx.fillText('Copy URL and use:',110,150);
+  ctx.fillStyle='#0066cc';ctx.font='9px sans-serif';
+  ctx.fillText('qr-code-generator.com',110,170);
+}
+
+function downloadQR(){
+  const canvas=document.getElementById('qrCanvas');
+  if(!canvas){toast('Generate a QR code first','err');return;}
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='drip_closet_qr_code.png';
+  a.click();
+  toast('QR code downloaded ✔','ok');
+}
+
+function printQR(){
+  const canvas=document.getElementById('qrCanvas');
+  if(!canvas){toast('Generate a QR code first','err');return;}
+  const dataUrl=canvas.toDataURL('image/png');
+  const w=window.open('','_blank','width=400,height=500');
+  w.document.write(`<html><head><title>Drip Closet QR Code</title>
+  <style>body{text-align:center;font-family:sans-serif;padding:40px;background:#fff}
+  h2{color:#ff8c00;font-size:22px;margin-bottom:8px}
+  p{color:#666;font-size:13px;margin-bottom:20px}
+  img{width:220px;height:220px;display:block;margin:0 auto 16px}
+  .url{font-size:11px;color:#999;word-break:break-all;max-width:260px;margin:0 auto}
+  </style></head><body>
+  <h2>Drip Closet</h2>
+  <p>Scan to shop our latest drip 🧥🔥</p>
+  <img src="${dataUrl}">
+  <div class="url">${document.getElementById('qrUrlInput').value}</div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+function copyQRUrl(){
+  const url=document.getElementById('qrUrlInput').value;
+  navigator.clipboard?.writeText(url).then(()=>toast('Store URL copied! ✔','ok')).catch(()=>toast('URL: '+url));
+}
+
+/* ════════════════════════════════════
+   PHOTO STRIP
+════════════════════════════════════ */
+function renderPhotoStrip(){
+  const section=document.getElementById('photoPreviewSection');
+  const strip=document.getElementById('photoStrip');
+  const countLabel=document.getElementById('photoCountLabel');
+  if(!photos.length){section.classList.remove('has-photos');strip.innerHTML='';return;}
+  section.classList.add('has-photos');
+  countLabel.textContent=photos.length;
+  if(primaryIdx>=photos.length)primaryIdx=0;
+  strip.innerHTML=photos.map((p,i)=>`
+    <div class="pp-thumb${i===primaryIdx?' primary':''}" onclick="setPrimary(${i})" title="${i===primaryIdx?'Primary photo':'Tap to make primary'}">
+      <img src="${p.dataUrl}" alt="photo ${i+1}" loading="lazy">
+      <button class="pp-thumb-del" onclick="event.stopPropagation();removePhoto(${i})">✕</button>
+    </div>`).join('');
+}
+function setPrimary(i){primaryIdx=i;renderPhotoStrip();toast('Primary photo set ★','ok')}
+function removePhoto(i){
+  photos.splice(i,1);
+  if(primaryIdx>=photos.length)primaryIdx=Math.max(0,photos.length-1);
+  renderPhotoStrip();
+  toast('Photo removed');
+}
+function clearAllPhotos(){photos=[];primaryIdx=0;renderPhotoStrip();toast('All photos cleared')}
+
+/* ════════════════════════════════════
+   SIZES
+════════════════════════════════════ */
+let customSizes=[];
+function toggleSize(el,sz){
+  el.classList.toggle('on');
+}
+function getSizes(){
+  const chips=[...document.querySelectorAll('#sizeChips .size-chip.on')].map(c=>c.dataset.sz||c.textContent.trim());
+  return chips.length?chips:['One Size'];
+}
+function addCustomSize(){
+  const v=document.getElementById('customSizeInput').value.trim();
+  if(!v)return;
+  const chips=document.getElementById('sizeChips');
+  const existing=[...chips.querySelectorAll('.size-chip')].find(c=>c.textContent.trim()===v);
+  if(existing){existing.classList.add('on');toast('Size selected','ok');}
+  else{
+    const chip=document.createElement('div');
+    chip.className='size-chip on';
+    chip.textContent=v;
+    chip.onclick=()=>chip.classList.toggle('on');
+    chips.appendChild(chip);
+    toast('Size "'+v+'" added','ok');
+  }
+  document.getElementById('customSizeInput').value='';
+}
+
+/* ════════════════════════════════════
+   BADGE
+════════════════════════════════════ */
+function setBadge(val,btn){
+  selectedBadge=val;
+  document.querySelectorAll('.badge-opt').forEach(b=>{b.classList.remove('on')});
+  btn.classList.add('on');
+}
+
+/* ════════════════════════════════════
+   SAVE PRODUCT
+════════════════════════════════════ */
+function saveProduct(){
+  const name=document.getElementById('fName').value.trim();
+  const price=parseFloat(document.getElementById('fPrice').value);
+  if(!name||!price||price<=0){toast('Name and price are required!','err');return;}
+  const was=parseFloat(document.getElementById('fWas').value)||null;
+  const cat=document.getElementById('fCat').value.trim()||'New Arrival';
+  const g=document.getElementById('fGender').value;
+  const sh=document.getElementById('fShape').value;
+  const sz=getSizes();
+  const desc=document.getElementById('fDesc').value.trim();
+  const stock=parseInt(document.getElementById('fStock').value)||0;
+  const badge=selectedBadge==='none'?null:selectedBadge;
+  const btxtMap={hot:'🔥 HOT',new:'NEW',sale:'SALE'};
+
+  const palette=['#ff8c00','#4466ff','#cc44aa','#00c4a7','#ff5544','#9966ff'];
+  const bgPalette=['#0d0c12','#080810','#100808','#0c0c10','#0e0812','#060e0c'];
+  const ac=palette[Math.floor(Math.random()*palette.length)];
+  const bg=bgPalette[Math.floor(Math.random()*bgPalette.length)];
+
+  // Build photos array — primary first
+  const orderedPhotos=photos.length?[
+    photos[primaryIdx],
+    ...photos.filter((_,i)=>i!==primaryIdx)
+  ]:[];
+
+  const btn=document.getElementById('submitBtn');
+  btn.classList.add('saving');
+  document.getElementById('submitBtnTxt').textContent='Saving…';
+
+  setTimeout(()=>{
+    if(editingId){
+      const idx=prods.findIndex(p=>p.id===editingId);
+      if(idx>=0){
+        prods[idx]={...prods[idx],name,cat,price,was,g,sh,sz,badge,btxt:badge?btxtMap[badge]:'',desc,stock,photos:orderedPhotos,img:orderedPhotos[0]?.dataUrl||prods[idx].img||null};
+      }
+    }else{
+      const maxId=prods.reduce((m,p)=>Math.max(m,p.id),0);
+      prods.push({
+        id:maxId+1,name,cat,price,was,g,sh,sz,badge,
+        btxt:badge?btxtMap[badge]:'',ac,bg,
+        stars:'★★★★★',desc,stock,
+        photos:orderedPhotos,
+        img:orderedPhotos[0]?.dataUrl||null
+      });
+    }
+    saveProds(prods);
+    renderList();
+    renderStats();
+    updateProdCount();
+    resetForm();
+    btn.classList.remove('saving');
+    document.getElementById('submitBtnTxt').textContent='✚ Add to Closet';
+    toast(editingId?'✔ Product updated!':'✔ Product added to closet!','ok');
+    editingId=null;
+  },120);
+}
+
+/* ════════════════════════════════════
+   RESET FORM
+════════════════════════════════════ */
+function resetForm(){
+  editingId=null;
+  photos=[];primaryIdx=0;
+  renderPhotoStrip();
+  ['fName','fCat','fPrice','fWas','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fStock').value='20';
+  document.getElementById('fGender').value='unisex';
+  document.getElementById('fShape').value='hoodie';
+  // reset sizes
+  document.querySelectorAll('#sizeChips .size-chip').forEach(c=>{
+    const def=['S','M','L','XL'];
+    c.classList.toggle('on',def.includes(c.textContent.trim()));
+  });
+  // remove custom sizes
+  document.querySelectorAll('#sizeChips .size-chip').forEach(c=>{
+    const built=['XS','S','M','L','XL','XXL','One Size'];
+    if(!built.includes(c.textContent.trim()))c.remove();
+  });
+  selectedBadge='none';
+  document.querySelectorAll('.badge-opt').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.badge-opt.none').classList.add('on');
+  document.getElementById('formTitle').textContent='Add to Closet';
+  document.getElementById('submitBtnTxt').textContent='✚ Add to Closet';
+  stopCamera();
+}
+
+/* ════════════════════════════════════
+   PRODUCT LIST
+════════════════════════════════════ */
+function fmtKES(v){return'KES '+Math.round(v).toLocaleString('en-KE')}
+function getShapeIcon(sh){return{hoodie:'🧥',cargo:'👖',bomber:'🥋',tee:'👕',dress:'👗',set:'🌿',denim:'🧤',crop:'🌸'}[sh]||'👔'}
+
+function renderList(){
+  const q=(document.getElementById('listSearch')?.value||'').toLowerCase();
+  const gf=(document.getElementById('listGender')?.value||'');
+  const el=document.getElementById('prodList');
+  const filtered=prods.filter(p=>{
+    const qOk=!q||(p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+    const gOk=!gf||p.g===gf;
+    return qOk&&gOk;
+  });
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty-state"><span class="empty-ico">${prods.length?'🔍':'🧥'}</span><div class="empty-title">${prods.length?'No results found':'Your closet is empty'}</div><div class="empty-sub">${prods.length?'Try a different search.':'Use the form on the left to add your first product.'}</div></div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(p=>{
+    const primaryPhoto=p.photos?.[0]?.dataUrl||p.img;
+    const photoCount=p.photos?.length||0;
+    return `<div class="prod-card">
+      <div class="prod-card-photo" style="background:${p.bg||'#1a1822'}">
+        ${primaryPhoto
+          ?`<img src="${primaryPhoto}" alt="${p.name}">`
+          :`<div class="prod-card-photo-fallback">${getShapeIcon(p.sh)}</div>`
+        }
+      </div>
+      <div class="prod-card-body">
+        <div class="prod-card-top">
+          <div class="prod-card-name">${p.name}</div>
+          <div class="prod-card-actions">
+            <button class="pca-btn" onclick="editProduct(${p.id})" title="Edit">✏️</button>
+            <button class="pca-btn del" onclick="askDelete(${p.id},'${p.name.replace(/'/g,"\\'")}'')" title="Delete">🗑️</button>
+          </div>
+        </div>
+        <div class="prod-card-meta">
+          <span class="meta-tag">${p.cat||'—'}</span>
+          <span class="meta-tag">${p.g}</span>
+          <span class="meta-tag">${p.sz?.join(', ')||'—'}</span>
+          <span class="meta-tag">Stock: ${p.stock||0}</span>
+        </div>
+        <div class="prod-card-bottom">
+          <div>
+            <span class="prod-price-main">${fmtKES(p.price)}</span>
+            ${p.was?`<span class="prod-price-was">${fmtKES(p.was)}</span>`:''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${p.badge?`<span class="prod-badge-tag badge-${p.badge}">${p.btxt||p.badge}</span>`:''}
+            <span class="prod-photo-count">📸 ${photoCount} photo${photoCount!==1?'s':''}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════
+   STATS
+════════════════════════════════════ */
+function renderStats(){
+  const el=document.getElementById('statsBar');
+  const total=prods.length;
+  const men=prods.filter(p=>p.g==='men').length;
+  const women=prods.filter(p=>p.g==='women').length;
+  const unisex=prods.filter(p=>p.g==='unisex').length;
+  const withPhotos=prods.filter(p=>p.photos?.length||p.img).length;
+  const totalStock=prods.reduce((s,p)=>s+(p.stock||0),0);
+  el.innerHTML=[
+    {n:total,l:'Products'},
+    {n:men,l:'Men'},
+    {n:women,l:'Women'},
+    {n:unisex,l:'Unisex'},
+    {n:withPhotos,l:'With Photos'},
+    {n:totalStock,l:'Total Stock'},
+  ].map(s=>`<div class="stat-cell"><span class="stat-n">${s.n}</span><div class="stat-l">${s.l}</div></div>`).join('');
+}
+function updateProdCount(){
+  document.getElementById('prodCountLabel').textContent=prods.length+' product'+(prods.length!==1?'s':'');
+}
+
+/* ════════════════════════════════════
+   EDIT PRODUCT
+════════════════════════════════════ */
+function editProduct(id){
+  const p=prods.find(x=>x.id===id);
+  if(!p)return;
+  editingId=id;
+  // fill form
+  document.getElementById('fName').value=p.name;
+  document.getElementById('fCat').value=p.cat||'';
+  document.getElementById('fPrice').value=p.price;
+  document.getElementById('fWas').value=p.was||'';
+  document.getElementById('fGender').value=p.g;
+  document.getElementById('fShape').value=p.sh;
+  document.getElementById('fDesc').value=p.desc||'';
+  document.getElementById('fStock').value=p.stock||0;
+  // sizes
+  document.querySelectorAll('#sizeChips .size-chip').forEach(c=>{
+    c.classList.toggle('on',(p.sz||[]).includes(c.textContent.trim()));
+  });
+  // badge
+  selectedBadge=p.badge||'none';
+  document.querySelectorAll('.badge-opt').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.badge-opt.${selectedBadge==='none'?'none':selectedBadge}`)?.classList.add('on');
+  // photos
+  photos=p.photos?[...p.photos]:p.img?[{dataUrl:p.img,name:'Photo 1'}]:[];
+  primaryIdx=0;
+  renderPhotoStrip();
+  // update form header
+  document.getElementById('formTitle').textContent='Edit Product';
+  document.getElementById('submitBtnTxt').textContent='💾 Save Changes';
+  // scroll to form
+  document.querySelector('.left-col').scrollTo({top:0,behavior:'smooth'});
+  toast(`Editing: ${p.name}`,'ok');
+}
+
+/* ════════════════════════════════════
+   DELETE
+════════════════════════════════════ */
+function askDelete(id,name){
+  pendingDeleteId=id;
+  document.getElementById('confSubText').textContent=`Delete "${name}"? This will permanently remove the product and all its photos.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('open');pendingDeleteId=null}
+function confirmDelete(){
+  if(!pendingDeleteId)return;
+  prods=prods.filter(p=>p.id!==pendingDeleteId);
+  saveProds(prods);
+  renderList();renderStats();updateProdCount();
+  closeConfirm();
+  toast('Product deleted','ok');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('open')}
+
+/* ════════════════════════════════════
+   TOAST
+════════════════════════════════════ */
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+(type||'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ════════════════════════════════════
+   INIT
+════════════════════════════════════ */
+function init(){
+  renderList();renderStats();updateProdCount();
+  // keyboard shortcut: Escape to close modals
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){closeEdit();closeConfirm();}
+  });
+  // keep size chips data-sz synced
+  document.querySelectorAll('#sizeChips .size-chip').forEach(c=>{
+    if(!c.dataset.sz)c.dataset.sz=c.textContent.trim();
+  });
+}
+
+/* ── Start ── */
+boot();
+</script>
+</body>
+</html>

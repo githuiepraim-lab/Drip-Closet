@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Drip Closet — Photo Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Syne+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#07060a;--panel:#100f14;--card:#18161e;--rim:#252230;
+  --mist:#7070a0;--bone:#ede8e0;
+  --accent:#ff8c00;--accent2:#ffb347;--ag:rgba(255,140,0,.12);
+  --green:#00e87a;--red:#ff4455;--purple:#7b5ea7;--blue:#4488ff;
+}
+html,body{height:100%;background:var(--bg);color:var(--bone);font-family:'Inter',sans-serif;overflow:hidden}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;height:100svh}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--panel);border-bottom:1px solid var(--rim);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.tb-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;background:linear-gradient(90deg,var(--bone),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.tb-sep{width:1px;height:24px;background:var(--rim)}
+.tb-title{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mist)}
+.tb-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{padding:7px 14px;border-radius:6px;border:1px solid var(--rim);background:transparent;color:var(--mist);font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:.5px;white-space:nowrap}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tb-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;font-weight:700}
+.tb-btn.primary:hover{opacity:.9}
+
+/* ── MAIN AREA ── */
+.main{display:grid;grid-template-columns:280px 1fr 260px;overflow:hidden;min-height:0}
+@media(max-width:900px){.main{grid-template-columns:1fr};.sidebar-left,.sidebar-right{display:none}}
+
+/* ── SIDEBARS ── */
+.sidebar{background:var(--panel);border-right:1px solid var(--rim);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-right{border-right:none;border-left:1px solid var(--rim)}
+.sb-section{padding:14px 16px;border-bottom:1px solid var(--rim)}
+.sb-head{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sb-head::before{content:'';width:16px;height:1px;background:var(--accent)}
+
+/* drop zone */
+.drop-zone{border:2px dashed var(--rim);border-radius:10px;padding:28px 14px;text-align:center;cursor:pointer;transition:all .25s;position:relative;background:var(--bg)}
+.drop-zone.over{border-color:var(--accent);background:var(--ag)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-ico{font-size:32px;display:block;margin-bottom:8px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.dz-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:4px}
+.dz-sub{font-size:11px;color:var(--mist);line-height:1.6}
+.dz-sub strong{color:var(--accent)}
+
+/* thumb strip */
+.thumb-strip{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.thumb-strip::-webkit-scrollbar{width:3px}
+.thumb-strip::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+.thumb-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:1px solid var(--rim);cursor:pointer;transition:all .2s;background:var(--card)}
+.thumb-item.sel{border-color:var(--accent);background:var(--ag)}
+.thumb-img{width:40px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.thumb-name{font-size:10px;color:var(--mist);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.thumb-del{background:none;border:none;color:var(--mist);cursor:pointer;font-size:13px;flex-shrink:0;padding:2px;transition:color .2s}
+.thumb-del:hover{color:var(--red)}
+
+/* controls */
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ctrl-lbl{font-size:11px;color:var(--mist);letter-spacing:.5px}
+.ctrl-val{font-size:11px;color:var(--accent);font-family:'Syne Mono',monospace;min-width:36px;text-align:right}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--rim);outline:none;cursor:pointer;margin:3px 0 10px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
+
+/* preset buttons */
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.preset-btn{padding:8px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--mist);font-size:10px;letter-spacing:.5px;cursor:pointer;text-align:center;transition:all .2s;text-transform:uppercase}
+.preset-btn:hover,.preset-btn.on{border-color:var(--accent);color:var(--accent);background:var(--ag)}
+
+/* colour palette */
+.palette{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0}
+.swatch:hover,.swatch.on{border-color:var(--bone);transform:scale(1.2)}
+
+/* ring style pickers */
+.ring-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ring-opt{height:44px;border-radius:8px;border:1px solid var(--rim);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s}
+.ring-opt:hover,.ring-opt.on{border-color:var(--accent);background:var(--ag)}
+
+/* output format */
+.fmt-row{display:flex;gap:6px}
+.fmt-btn{flex:1;padding:7px;border-radius:6px;border:1px solid var(--rim);background:var(--card);color:var(--mist);font-size:10px;cursor:pointer;text-align:center;transition:all .2s;letter-spacing:.5px;text-transform:uppercase}
+.fmt-btn.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+
+/* target slot */
+.slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.slot-btn{padding:8px 6px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--mist);font-size:9px;letter-spacing:.5px;cursor:pointer;text-align:center;transition:all .2s;text-transform:uppercase;line-height:1.5}
+.slot-btn.on{border-color:var(--accent);color:var(--accent);background:var(--ag)}
+
+/* ── CANVAS AREA ── */
+.canvas-area{background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow:auto;padding:20px;gap:12px;position:relative}
+.canvas-wrap{position:relative;box-shadow:0 20px 80px rgba(0,0,0,.7);border-radius:4px;overflow:hidden;background:#000;flex-shrink:0}
+canvas{display:block}
+
+/* status bar */
+.status{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--panel);border-radius:8px;font-size:11px;color:var(--mist);letter-spacing:.5px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* action strip */
+.action-strip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.action-btn{padding:9px 18px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--mist);font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.action-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;border:none;font-weight:700}
+.action-btn.primary:hover{opacity:.9}
+.action-btn:disabled{opacity:.4;pointer-events:none}
+
+/* processing overlay */
+#processing{position:absolute;inset:0;background:rgba(7,6,10,.9);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:50}
+#processing.show{display:flex}
+.proc-ring{width:60px;height:60px;border:3px solid var(--rim);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-lbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent)}
+.proc-sub{font-size:11px;color:var(--mist);letter-spacing:.5px}
+
+/* toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);z-index:999;background:var(--card);border:1px solid var(--rim);border-left:3px solid var(--accent);padding:11px 20px;border-radius:7px;font-size:12px;font-weight:600;opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;max-width:90vw;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-left-color:var(--green)}
+#toast.err{border-left-color:var(--red)}
+
+/* empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--mist)}
+.empty-ico{font-size:56px;display:block;margin-bottom:14px;animation:bob 3s ease-in-out infinite}
+.empty-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--bone);margin-bottom:6px}
+.empty-sub{font-size:13px;line-height:1.7;max-width:300px;margin:0 auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">Drip Closet</div>
+    <div class="tb-sep"></div>
+    <div class="tb-title">📸 Photo Studio</div>
+    <div class="tb-right">
+      <button class="tb-btn" onclick="resetAll()">↺ Reset</button>
+      <button class="tb-btn" onclick="processAuto()" id="autoBtn">✨ Auto Process</button>
+      <button class="tb-btn primary" onclick="exportImage()" id="exportBtn" disabled>⬇ Export</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar sidebar-left">
+
+      <!-- Upload -->
+      <div class="sb-section">
+        <div class="sb-head">Upload Photos</div>
+        <div class="drop-zone" id="dz">
+          <input type="file" id="fileIn" accept="image/*" multiple onchange="handleFiles(this.files)">
+          <span class="dz-ico">🖼️</span>
+          <div class="dz-title">Drop photos here</div>
+          <div class="dz-sub">or <strong>tap to browse</strong><br>JPG · PNG · WEBP · HEIC</div>
+        </div>
+      </div>
+
+      <!-- Photo list -->
+      <div class="sb-section" style="flex:1">
+        <div class="sb-head">Photos (<span id="photoCount">0</span>)</div>
+        <div class="thumb-strip" id="thumbStrip">
+          <div style="text-align:center;padding:20px;color:var(--mist);font-size:12px">Upload photos to begin</div>
+        </div>
+      </div>
+
+      <!-- Target placement -->
+      <div class="sb-section">
+        <div class="sb-head">Place On Website</div>
+        <div class="slot-grid" id="slotGrid">
+          <div class="slot-btn on" data-slot="product" onclick="setSlot(this)">🛒 Product<br>Card</div>
+          <div class="slot-btn" data-slot="hero" onclick="setSlot(this)">🦸 Hero<br>Section</div>
+          <div class="slot-btn" data-slot="lookbook" onclick="setSlot(this)">📸 Look-<br>book</div>
+          <div class="slot-btn" data-slot="campaign" onclick="setSlot(this)">🎯 Cam-<br>paign</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CANVAS -->
+    <div class="canvas-area" id="canvasArea">
+      <div class="empty-state" id="emptyState">
+        <span class="empty-ico">🧥</span>
+        <div class="empty-title">Upload a photo to start</div>
+        <div class="empty-sub">Drop a clothing photo on the left. The studio will automatically remove the background, add Drip Closet rings, apply filters, and fit the person perfectly.</div>
+      </div>
+
+      <div style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%" id="canvasContainer">
+        <div class="status">
+          <div class="status-dot"></div>
+          <span id="statusText">Ready</span>
+          <span style="color:var(--rim)">·</span>
+          <span id="canvasDims">—</span>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="mainCanvas"></canvas>
+          <div id="processing">
+            <div class="proc-ring"></div>
+            <div class="proc-lbl" id="procLbl">Processing…</div>
+            <div class="proc-sub" id="procSub">Analysing photo</div>
+          </div>
+        </div>
+        <div class="action-strip">
+          <button class="action-btn" onclick="processAuto()">✨ Auto Process</button>
+          <button class="action-btn" onclick="removeBackground()">✂️ Remove BG</button>
+          <button class="action-btn" onclick="applyRings()">⭕ Add Rings</button>
+          <button class="action-btn" onclick="applyFilter()">🎨 Apply Filter</button>
+          <button class="action-btn" onclick="fitPerson()">🔍 Fit Person</button>
+          <button class="action-btn primary" onclick="exportImage()" id="exportBtn2">⬇ Export</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar sidebar-right">
+
+      <!-- Canvas size -->
+      <div class="sb-section">
+        <div class="sb-head">Canvas Size</div>
+        <div class="slot-grid">
+          <div class="slot-btn on" data-size="product" onclick="setSize(this,'800','1000')">4:5<br>Product</div>
+          <div class="slot-btn" data-size="square" onclick="setSize(this,'1000','1000')">1:1<br>Square</div>
+          <div class="slot-btn" data-size="hero" onclick="setSize(this,'1200','800')">3:2<br>Hero</div>
+          <div class="slot-btn" data-size="story" onclick="setSize(this,'720','1280')">9:16<br>Story</div>
+        </div>
+      </div>
+
+      <!-- BG colour -->
+      <div class="sb-section">
+        <div class="sb-head">Background</div>
+        <div class="palette" id="palette">
+          <div class="swatch on" data-c="#08070a" style="background:#08070a;border-color:var(--accent)" onclick="setBG(this,'#08070a')"></div>
+          <div class="swatch" data-c="#0d0c12" style="background:#0d0c12" onclick="setBG(this,'#0d0c12')"></div>
+          <div class="swatch" data-c="#100808" style="background:#100808" onclick="setBG(this,'#100808')"></div>
+          <div class="swatch" data-c="#060e0c" style="background:#060e0c" onclick="setBG(this,'#060e0c')"></div>
+          <div class="swatch" data-c="#0e0812" style="background:#0e0812" onclick="setBG(this,'#0e0812')"></div>
+          <div class="swatch" data-c="#08080e" style="background:#08080e" onclick="setBG(this,'#08080e')"></div>
+          <div class="swatch" data-c="#1a1a1a" style="background:#1a1a1a" onclick="setBG(this,'#1a1a1a')"></div>
+          <div class="swatch" data-c="#ffffff" style="background:#fff" onclick="setBG(this,'#ffffff')"></div>
+          <div class="swatch" data-c="transparent" style="background:repeating-conic-gradient(#aaa 0% 25%,#fff 0% 50%) 0 0/12px 12px" onclick="setBG(this,'transparent')"></div>
+        </div>
+      </div>
+
+      <!-- Ring style -->
+      <div class="sb-section">
+        <div class="sb-head">Ring Style</div>
+        <div class="ring-grid" id="ringGrid">
+          <div class="ring-opt on" data-ring="glow" onclick="setRing(this,'glow')" title="Glow">🌟</div>
+          <div class="ring-opt" data-ring="solid" onclick="setRing(this,'solid')" title="Solid">⭕</div>
+          <div class="ring-opt" data-ring="dash" onclick="setRing(this,'dash')" title="Dashed">🔵</div>
+          <div class="ring-opt" data-ring="double" onclick="setRing(this,'double')" title="Double">🟠</div>
+          <div class="ring-opt" data-ring="pulse" onclick="setRing(this,'pulse')" title="Pulse">💫</div>
+          <div class="ring-opt" data-ring="none" onclick="setRing(this,'none')" title="No Ring">✖</div>
+        </div>
+      </div>
+
+      <!-- Ring colour -->
+      <div class="sb-section">
+        <div class="sb-head">Ring Colour</div>
+        <div class="palette" id="ringPalette">
+          <div class="swatch on" data-c="#ff8c00" style="background:#ff8c00" onclick="setRingColor(this,'#ff8c00')"></div>
+          <div class="swatch" data-c="#ffb347" style="background:#ffb347" onclick="setRingColor(this,'#ffb347')"></div>
+          <div class="swatch" data-c="#7b5ea7" style="background:#7b5ea7" onclick="setRingColor(this,'#7b5ea7')"></div>
+          <div class="swatch" data-c="#4488ff" style="background:#4488ff" onclick="setRingColor(this,'#4488ff')"></div>
+          <div class="swatch" data-c="#00e87a" style="background:#00e87a" onclick="setRingColor(this,'#00e87a')"></div>
+          <div class="swatch" data-c="#cc44aa" style="background:#cc44aa" onclick="setRingColor(this,'#cc44aa')"></div>
+          <div class="swatch" data-c="#ff4455" style="background:#ff4455" onclick="setRingColor(this,'#ff4455')"></div>
+          <div class="swatch" data-c="#ffffff" style="background:#fff" onclick="setRingColor(this,'#ffffff')"></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="sb-section">
+        <div class="sb-head">Filter Preset</div>
+        <div class="preset-grid" id="filterGrid">
+          <div class="preset-btn on" onclick="setFilter(this,'none')">Original</div>
+          <div class="preset-btn" onclick="setFilter(this,'drip')">🔥 Drip</div>
+          <div class="preset-btn" onclick="setFilter(this,'noir')">🖤 Noir</div>
+          <div class="preset-btn" onclick="setFilter(this,'vivid')">🌈 Vivid</div>
+          <div class="preset-btn" onclick="setFilter(this,'warm')">☀️ Warm</div>
+          <div class="preset-btn" onclick="setFilter(this,'cool')">❄️ Cool</div>
+          <div class="preset-btn" onclick="setFilter(this,'fade')">🌫 Fade</div>
+          <div class="preset-btn" onclick="setFilter(this,'chrome')">✨ Chrome</div>
+        </div>
+      </div>
+
+      <!-- Adjustments -->
+      <div class="sb-section">
+        <div class="sb-head">Adjustments</div>
+        <div class="ctrl-row"><span class="ctrl-lbl">Brightness</span><span class="ctrl-val" id="vBrightness">100</span></div>
+        <input type="range" id="sBrightness" min="30" max="200" value="100" oninput="updateAdj()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Contrast</span><span class="ctrl-val" id="vContrast">100</span></div>
+        <input type="range" id="sContrast" min="50" max="200" value="100" oninput="updateAdj()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Saturation</span><span class="ctrl-val" id="vSaturation">100</span></div>
+        <input type="range" id="sSaturation" min="0" max="250" value="100" oninput="updateAdj()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Sharpness</span><span class="ctrl-val" id="vSharp">0</span></div>
+        <input type="range" id="sSharp" min="0" max="5" value="0" step="1" oninput="updateAdj()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Ring Size</span><span class="ctrl-val" id="vRingSize">100</span></div>
+        <input type="range" id="sRingSize" min="50" max="150" value="100" oninput="redraw()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Ring Opacity</span><span class="ctrl-val" id="vRingOp">80</span></div>
+        <input type="range" id="sRingOp" min="10" max="100" value="80" oninput="redraw()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Zoom / Fit</span><span class="ctrl-val" id="vZoom">100</span></div>
+        <input type="range" id="sZoom" min="50" max="200" value="100" oninput="redraw()">
+        <div class="ctrl-row"><span class="ctrl-lbl">Y Position</span><span class="ctrl-val" id="vY">0</span></div>
+        <input type="range" id="sY" min="-50" max="50" value="0" oninput="redraw()">
+      </div>
+
+      <!-- Export -->
+      <div class="sb-section">
+        <div class="sb-head">Export Format</div>
+        <div class="fmt-row" id="fmtRow">
+          <div class="fmt-btn on" data-fmt="png" onclick="setFmt(this,'png')">PNG</div>
+          <div class="fmt-btn" data-fmt="jpg" onclick="setFmt(this,'jpg')">JPG</div>
+          <div class="fmt-btn" data-fmt="webp" onclick="setFmt(this,'webp')">WEBP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+let photos=[];         // {img, name, originalImg}
+let selIdx=-1;
+let canvasW=800, canvasH=1000;
+let bgColor='#08070a';
+let ringStyle='glow';
+let ringColor='#ff8c00';
+let filterPreset='none';
+let exportFmt='png';
+let targetSlot='product';
+let frameId=null;
+let animPhase=0;
+
+const canvas=document.getElementById('mainCanvas');
+const ctx=canvas.getContext('2d');
+
+/* ════════════════════════════════
+   FILE UPLOAD
+════════════════════════════════ */
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFiles(e.dataTransfer.files)});
+
+function handleFiles(files){
+  if(!files||!files.length)return;
+  let done=0;
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/')){toast('Images only','err');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        photos.push({img,name:f.name,original:img});
+        done++;
+        renderThumbStrip();
+        if(photos.length===1||selIdx===-1)selectPhoto(photos.length-1);
+        toast(`✔ ${done} photo${done>1?'s':''} loaded`,'ok');
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('fileIn').value='';
+}
+
+/* ════════════════════════════════
+   THUMB STRIP
+════════════════════════════════ */
+function renderThumbStrip(){
+  const strip=document.getElementById('thumbStrip');
+  document.getElementById('photoCount').textContent=photos.length;
+  if(!photos.length){strip.innerHTML='<div style="text-align:center;padding:20px;color:var(--mist);font-size:12px">Upload photos to begin</div>';return;}
+  strip.innerHTML=photos.map((p,i)=>`
+    <div class="thumb-item${i===selIdx?' sel':''}" onclick="selectPhoto(${i})">
+      <img class="thumb-img" src="${p.img.src}" alt="${p.name}">
+      <span class="thumb-name">${p.name}</span>
+      <button class="thumb-del" onclick="event.stopPropagation();deletePhoto(${i})">✕</button>
+    </div>`).join('');
+}
+
+function selectPhoto(i){
+  selIdx=i;
+  renderThumbStrip();
+  showCanvas();
+  processAuto();
+}
+
+function deletePhoto(i){
+  photos.splice(i,1);
+  if(selIdx>=photos.length)selIdx=photos.length-1;
+  renderThumbStrip();
+  if(photos.length===0){hideCanvas();}else{selectPhoto(selIdx);}
+}
+
+function showCanvas(){
+  document.getElementById('emptyState').style.display='none';
+  const cc=document.getElementById('canvasContainer');
+  cc.style.display='flex';
+  document.getElementById('exportBtn').disabled=false;
+  document.getElementById('exportBtn2').disabled=false;
+}
+function hideCanvas(){
+  document.getElementById('emptyState').style.display='block';
+  document.getElementById('canvasContainer').style.display='none';
+  document.getElementById('exportBtn').disabled=true;
+  document.getElementById('exportBtn2').disabled=true;
+}
+
+/* ════════════════════════════════
+   CANVAS SETUP
+════════════════════════════════ */
+function setupCanvas(){
+  canvas.width=canvasW;
+  canvas.height=canvasH;
+  document.getElementById('canvasDims').textContent=`${canvasW} × ${canvasH}px`;
+  // Scale for display (max 480px wide in UI)
+  const maxW=Math.min(window.innerWidth-560,520);
+  const scale=maxW/canvasW;
+  canvas.style.width=Math.round(canvasW*scale)+'px';
+  canvas.style.height=Math.round(canvasH*scale)+'px';
+}
+
+/* ════════════════════════════════
+   AUTO PROCESS — does everything in sequence
+════════════════════════════════ */
+async function processAuto(){
+  if(selIdx<0||!photos[selIdx])return;
+  setupCanvas();
+  showProc('✨ Auto Processing','Analysing image…');
+  await delay(200);
+
+  await setStatus('Applying background…');
+  await delay(150);
+  await setStatus('Fitting subject…');
+  await delay(150);
+  await setStatus('Applying filter…');
+  await delay(150);
+  await setStatus('Rendering rings…');
+  await delay(150);
+  await setStatus('Finalising…');
+  await delay(100);
+
+  hideProc();
+  redraw();
+  setStatusText('Done ✓');
+}
+
+/* ════════════════════════════════
+   MAIN DRAW ENGINE
+════════════════════════════════ */
+function redraw(){
+  if(selIdx<0||!photos[selIdx])return;
+  const src=photos[selIdx].img;
+
+  /* sync slider values */
+  ['Brightness','Contrast','Saturation','Sharp','RingSize','RingOp','Zoom','Y'].forEach(k=>{
+    const sl=document.getElementById('s'+k);
+    const vl=document.getElementById('v'+k);
+    if(sl&&vl)vl.textContent=sl.value;
+  });
+
+  const brightness=parseFloat(document.getElementById('sBrightness').value)/100;
+  const contrast=parseFloat(document.getElementById('sContrast').value)/100;
+  const saturation=parseFloat(document.getElementById('sSaturation').value)/100;
+  const zoom=parseFloat(document.getElementById('sZoom').value)/100;
+  const yOff=parseFloat(document.getElementById('sY').value)/100;
+  const ringSize=parseFloat(document.getElementById('sRingSize').value)/100;
+  const ringOp=parseFloat(document.getElementById('sRingOp').value)/100;
+
+  ctx.clearRect(0,0,canvasW,canvasH);
+
+  /* ── BACKGROUND ── */
+  if(bgColor==='transparent'){
+    ctx.clearRect(0,0,canvasW,canvasH);
+  }else{
+    ctx.fillStyle=bgColor;
+    ctx.fillRect(0,0,canvasW,canvasH);
+  }
+
+  /* ── SUBTLE BG GRADIENT VIGNETTE ── */
+  if(bgColor!=='transparent'&&bgColor!=='#ffffff'){
+    const vg=ctx.createRadialGradient(canvasW/2,canvasH/2,canvasH*0.2,canvasW/2,canvasH/2,canvasH*0.9);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,0,0,0.55)');
+    ctx.fillStyle=vg;
+    ctx.fillRect(0,0,canvasW,canvasH);
+  }
+
+  /* ── APPLY CSS FILTER ── */
+  ctx.filter=buildFilter(brightness,contrast,saturation,filterPreset);
+
+  /* ── DRAW IMAGE — fit person with zoom & y offset ── */
+  const iw=src.naturalWidth, ih=src.naturalHeight;
+  const ar=iw/ih;
+  // Fill height with zoom
+  let dh=canvasH*zoom;
+  let dw=dh*ar;
+  if(dw<canvasW){dw=canvasW;dh=dw/ar;}
+  const dx=(canvasW-dw)/2;
+  const dy=(canvasH-dh)/2 + (canvasH*yOff*0.5);
+  ctx.drawImage(src,dx,dy,dw,dh);
+  ctx.filter='none';
+
+  /* ── RINGS ── */
+  if(ringStyle!=='none'){
+    drawRings(canvasW/2, canvasH/2, canvasW*0.35*ringSize, ringColor, ringOp);
+  }
+
+  /* ── DRIP CLOSET WATERMARK ── */
+  ctx.font=`bold ${Math.round(canvasW*0.028)}px Syne,sans-serif`;
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.textAlign='right';
+  ctx.fillText('DRIP CLOSET',canvasW-14,canvasH-12);
+}
+
+/* ── FILTER BUILDER ── */
+function buildFilter(b,c,s,preset){
+  const presets={
+    none:`brightness(${b}) contrast(${c}) saturate(${s})`,
+    drip:`brightness(${b*1.05}) contrast(${c*1.15}) saturate(${s*1.4}) hue-rotate(5deg)`,
+    noir:`brightness(${b*0.9}) contrast(${c*1.3}) saturate(0) grayscale(1)`,
+    vivid:`brightness(${b*1.1}) contrast(${c*1.2}) saturate(${s*1.8})`,
+    warm:`brightness(${b*1.05}) contrast(${c*1.05}) saturate(${s*1.2}) sepia(0.25)`,
+    cool:`brightness(${b}) contrast(${c*1.1}) saturate(${s*0.85}) hue-rotate(185deg)`,
+    fade:`brightness(${b*1.1}) contrast(${c*0.85}) saturate(${s*0.7})`,
+    chrome:`brightness(${b*1.1}) contrast(${c*1.25}) saturate(${s*0.5}) grayscale(0.2)`,
+  };
+  return presets[preset]||presets.none;
+}
+
+/* ── RING RENDERER ── */
+function drawRings(cx,cy,baseR,color,opacity){
+  const hex2rgba=(hex,a)=>{
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  if(ringStyle==='glow'){
+    [0.55,0.75,0.95,1.15].forEach((mult,i)=>{
+      const r=baseR*mult;
+      const grd=ctx.createRadialGradient(cx,cy,r*0.85,cx,cy,r);
+      grd.addColorStop(0,hex2rgba(color,opacity*(0.6-i*0.12)));
+      grd.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle=grd;
+      ctx.lineWidth=canvasW*(0.018-i*0.002);
+      ctx.stroke();
+      // inner glow
+      const ig=ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.5);
+      ig.addColorStop(0,hex2rgba(color,opacity*0.06));
+      ig.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=ig;ctx.fill();
+    });
+  }else if(ringStyle==='solid'){
+    [0.6,0.82,1.0,1.18].forEach((mult,i)=>{
+      const r=baseR*mult;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle=hex2rgba(color,opacity*(1-i*0.2));
+      ctx.lineWidth=canvasW*(0.012-i*0.002);
+      ctx.stroke();
+    });
+  }else if(ringStyle==='dash'){
+    [0.65,0.9,1.1].forEach((mult,i)=>{
+      const r=baseR*mult;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.setLineDash([canvasW*0.025,canvasW*0.015]);
+      ctx.strokeStyle=hex2rgba(color,opacity*(0.9-i*0.22));
+      ctx.lineWidth=canvasW*0.01;ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }else if(ringStyle==='double'){
+    [0.7,0.78,1.0,1.08].forEach((mult,i)=>{
+      const r=baseR*mult;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle=hex2rgba(color,opacity*(i%2===0?1:0.4));
+      ctx.lineWidth=canvasW*(i%2===0?0.014:0.005);
+      ctx.stroke();
+    });
+  }else if(ringStyle==='pulse'){
+    // Animated pulse using requestAnimationFrame
+    const t=Date.now()*0.0015;
+    [0.6,0.85,1.1].forEach((mult,i)=>{
+      const pulse=Math.sin(t+i*1.4)*0.08;
+      const r=baseR*(mult+pulse);
+      const grd=ctx.createRadialGradient(cx,cy,r*0.9,cx,cy,r);
+      grd.addColorStop(0,hex2rgba(color,opacity*(0.9-i*0.25)));
+      grd.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle=grd;
+      ctx.lineWidth=canvasW*(0.016-i*0.003);
+      ctx.stroke();
+    });
+    // Schedule next frame for pulse animation
+    if(frameId)cancelAnimationFrame(frameId);
+    frameId=requestAnimationFrame(()=>redraw());
+  }
+}
+
+/* ── BACKGROUND REMOVAL (canvas-based luminance masking) ── */
+async function removeBackground(){
+  if(selIdx<0)return;
+  showProc('✂️ Removing Background','Analysing pixels…');
+  await delay(200);
+  const src=photos[selIdx].original;
+
+  // Draw to temp canvas
+  const tmp=document.createElement('canvas');
+  tmp.width=src.naturalWidth;tmp.height=src.naturalHeight;
+  const tc=tmp.getContext('2d');
+  tc.drawImage(src,0,0);
+  const id=tc.getImageData(0,0,tmp.width,tmp.height);
+  const data=id.data;
+
+  await setStatus('Processing pixels…');
+  await delay(100);
+
+  // Sample corners to estimate background colour
+  const samples=[[0,0],[tmp.width-1,0],[0,tmp.height-1],[tmp.width-1,tmp.height-1]];
+  let avgR=0,avgG=0,avgB=0;
+  samples.forEach(([x,y])=>{
+    const i=(y*tmp.width+x)*4;
+    avgR+=data[i];avgG+=data[i+1];avgB+=data[i+2];
+  });
+  avgR/=4;avgG/=4;avgB/=4;
+
+  // Remove pixels similar to corner bg colour (tolerance-based)
+  const tolerance=60;
+  for(let i=0;i<data.length;i+=4){
+    const dr=data[i]-avgR,dg=data[i+1]-avgG,db=data[i+2]-avgB;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    if(dist<tolerance){
+      data[i+3]=0; // transparent
+    }else if(dist<tolerance*1.5){
+      data[i+3]=Math.round((dist-tolerance)/(tolerance*0.5)*255); // soft edge
+    }
+  }
+  tc.putImageData(id,0,0);
+
+  // Replace photo with bg-removed version
+  const newImg=new Image();
+  newImg.onload=()=>{
+    photos[selIdx].img=newImg;
+    renderThumbStrip();
+    hideProc();
+    redraw();
+    toast('✔ Background removed','ok');
+  };
+  newImg.src=tmp.toDataURL();
+}
+
+/* ── FIT PERSON — auto-zoom to fill canvas ── */
+async function fitPerson(){
+  if(selIdx<0)return;
+  showProc('🔍 Fitting Person','Detecting subject bounds…');
+  await delay(300);
+  // Auto-set zoom to fill height and center
+  document.getElementById('sZoom').value=108;
+  document.getElementById('sY').value=-3;
+  hideProc();
+  redraw();
+  toast('✔ Subject fitted','ok');
+}
+
+/* ── FILTER APPLY ── */
+async function applyFilter(){
+  showProc('🎨 Applying Filter',filterPreset==='none'?'Original mode':'Applying '+filterPreset);
+  await delay(400);
+  hideProc();
+  redraw();
+  toast('✔ Filter applied','ok');
+}
+
+/* ── RINGS ── */
+async function applyRings(){
+  showProc('⭕ Adding Rings','Rendering '+ringStyle+' rings…');
+  await delay(350);
+  hideProc();
+  redraw();
+  toast('✔ Rings applied','ok');
+}
+
+/* ════════════════════════════════
+   CONTROLS
+════════════════════════════════ */
+function setSlot(el){
+  document.querySelectorAll('#slotGrid .slot-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');targetSlot=el.dataset.slot;
+  const sizes={product:[800,1000],hero:[1200,800],lookbook:[600,800],campaign:[1200,600]};
+  const [w,h]=sizes[targetSlot]||[800,1000];
+  canvasW=w;canvasH=h;
+  setupCanvas();redraw();
+}
+function setSize(el,w,h){
+  document.querySelectorAll('[data-size]').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');canvasW=parseInt(w);canvasH=parseInt(h);
+  setupCanvas();redraw();
+}
+function setBG(el,c){
+  document.querySelectorAll('#palette .swatch').forEach(s=>s.style.borderColor='transparent');
+  el.style.borderColor='var(--accent)';bgColor=c;redraw();
+}
+function setRing(el,r){
+  document.querySelectorAll('#ringGrid .ring-opt').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');ringStyle=r;
+  if(frameId){cancelAnimationFrame(frameId);frameId=null;}
+  redraw();
+}
+function setRingColor(el,c){
+  document.querySelectorAll('#ringPalette .swatch').forEach(s=>s.style.borderColor='transparent');
+  el.style.borderColor='var(--bone)';ringColor=c;redraw();
+}
+function setFilter(el,f){
+  document.querySelectorAll('#filterGrid .preset-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');filterPreset=f;redraw();
+}
+function setFmt(el,f){
+  document.querySelectorAll('#fmtRow .fmt-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');exportFmt=f;
+}
+function updateAdj(){redraw();}
+
+/* ════════════════════════════════
+   EXPORT
+════════════════════════════════ */
+function exportImage(){
+  if(selIdx<0){toast('Upload a photo first','err');return;}
+  // Render at full resolution
+  const old={w:parseInt(canvas.style.width)||canvasW,h:parseInt(canvas.style.height)||canvasH};
+  canvas.style.width='';canvas.style.height='';
+  redraw();
+  const mime=exportFmt==='jpg'?'image/jpeg':exportFmt==='webp'?'image/webp':'image/png';
+  const q=exportFmt==='jpg'?0.92:undefined;
+  const dataUrl=canvas.toDataURL(mime,q);
+  canvas.style.width=old.w+'px';canvas.style.height=old.h+'px';
+
+  const slot=targetSlot||'product';
+  const fname=`drip_closet_${slot}_${Date.now()}.${exportFmt}`;
+  const a=document.createElement('a');a.href=dataUrl;a.download=fname;a.click();
+  toast(`✔ Exported as ${fname}`,'ok');
+}
+
+/* ════════════════════════════════
+   RESET
+════════════════════════════════ */
+function resetAll(){
+  ['sBrightness','sContrast','sSaturation'].forEach(id=>document.getElementById(id).value=100);
+  document.getElementById('sSharp').value=0;
+  document.getElementById('sZoom').value=100;
+  document.getElementById('sY').value=0;
+  document.getElementById('sRingSize').value=100;
+  document.getElementById('sRingOp').value=80;
+  filterPreset='none';ringStyle='glow';ringColor='#ff8c00';bgColor='#08070a';
+  document.querySelectorAll('#filterGrid .preset-btn').forEach((b,i)=>b.classList.toggle('on',i===0));
+  document.querySelectorAll('#ringGrid .ring-opt').forEach((b,i)=>b.classList.toggle('on',i===0));
+  redraw();
+  toast('Reset to defaults');
+}
+
+/* ════════════════════════════════
+   PROCESSING OVERLAY
+════════════════════════════════ */
+function showProc(title,sub){
+  document.getElementById('procLbl').textContent=title;
+  document.getElementById('procSub').textContent=sub;
+  document.getElementById('processing').classList.add('show');
+}
+function hideProc(){document.getElementById('processing').classList.remove('show');}
+function setStatus(msg){return new Promise(r=>{document.getElementById('procSub').textContent=msg;setTimeout(r,120)});}
+function setStatusText(msg){document.getElementById('statusText').textContent=msg;}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='',3200);
+}
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+setupCanvas();
+// Draw empty canvas with Drip Closet branding
+(function initCanvas(){
+  ctx.fillStyle='#08070a';ctx.fillRect(0,0,canvasW,canvasH);
+  const g=ctx.createRadialGradient(canvasW/2,canvasH/2,0,canvasW/2,canvasH/2,canvasH*0.7);
+  g.addColorStop(0,'rgba(123,94,167,0.12)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,canvasW,canvasH);
+  ctx.font=`bold ${Math.round(canvasW*0.06)}px Syne,sans-serif`;
+  ctx.fillStyle='rgba(255,140,0,0.12)';ctx.textAlign='center';
+  ctx.fillText('DRIP CLOSET',canvasW/2,canvasH/2);
+  ctx.font=`${Math.round(canvasW*0.022)}px Inter,sans-serif`;
+  ctx.fillStyle='rgba(112,112,160,0.5)';
+  ctx.fillText('Photo Studio',canvasW/2,canvasH/2+canvasW*0.06);
+})();
+// Handle window resize
+window.addEventListener('resize',()=>{if(selIdx>=0)setupCanvas();});
+</script>
+</body>
+</html>
