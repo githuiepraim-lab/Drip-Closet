@@ -4,32 +4,29 @@
 (function () {
   const SUPABASE_URL = 'https://cezhlycsuecrvwfxbrpg.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_6P8oGvY4B4-dFopVbUGAtQ_sJ59WLwH';
+  const CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-  function loadClient() {
-    if (window.supabase && window.supabase.createClient) {
-      window.DripClosetSupabase = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storageKey: 'drip-closet-auth'
-          }
+  async function loadClient() {
+    if (window.DripClosetSupabase) return window.DripClosetSupabase;
+    try {
+      const mod = await import(CDN);
+      const client = mod.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'drip-closet-auth'
         }
-      );
+      });
+      window.DripClosetSupabase = client;
       window.DRIP_CLOSET_SUPABASE_URL = SUPABASE_URL;
-      return window.DripClosetSupabase;
+      return client;
+    } catch (error) {
+      console.error('Drip Closet: failed to load Supabase JS client', error);
+      return null;
     }
-    console.error('Drip Closet: Supabase JS client was not loaded.');
-    return null;
   }
 
   window.getDripClosetSupabase = loadClient;
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadClient, { once: true });
-  } else {
-    loadClient();
-  }
+  loadClient();
 })();
