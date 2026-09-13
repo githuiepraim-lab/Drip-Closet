@@ -1,22 +1,44 @@
 # Drip Closet 🧥🔥
 
-**Nairobi Streetwear Brand** — Built with zero monthly fees. All files work offline, no backend required.
+**Nairobi Streetwear Brand** — Supabase-backed ecommerce system.
 
-## Files
+## Applications
 
-| File | Description |
-|------|-------------|
-| `drip_closet_website.html` | Main store — shop, auth, admin panel, KCB checkout |
-| `drip_closet_admin.html` | Standalone admin — product management, QR code |
-| `drip_closet_pos.html` | Offline POS — sales, inventory, receipts |
-| `drip_closet_photoshop.html` | Photo Studio — 3D rings, background removal, export |
+| File | Purpose |
+|------|---------|
+| `drip_closet_website.html` | Customer storefront |
+| `drip_closet_admin.html` | Admin product/order management |
+| `drip_closet_pos.html` | POS interface |
+| `drip_closet_photoshop.html` | Product image preparation |
 
-## Quick Start
+## Backend
 
-1. Open `drip_closet_website.html` in any browser
-2. Sign in or create an account
-3. Tap ⚙️ in the nav to access the Admin Panel
-   - **Username:** `admin` **Password:** `dripcloset2025`
+The production backend is Supabase project `cezhlycsuecrvwfxbrpg`.
+
+- Supabase Auth — customer/admin authentication
+- PostgreSQL — products, profiles, orders, order items and wishlists
+- Supabase Storage — persistent product images
+- Edge Functions — server-side AI/image workflows
+- Row Level Security — database authorization
+
+The browser must never contain a Supabase service-role/secret key. Only the public/publishable key belongs in frontend code, with RLS providing authorization.
+
+## Development
+
+Do not use localStorage as the authoritative product, inventory, customer, order or image database. Browser storage may be used only for non-authoritative UI state such as a temporary cart/cache.
+
+Database changes belong in `supabase/migrations/` and should be deployed through the connected Supabase project.
+
+## Production configuration
+
+Configure the real deployed storefront URL in Supabase Authentication → URL Configuration. Add every production callback/reset URL to the allowed Redirect URLs. Do not use `localhost` as the production Site URL.
+
+## Security
+
+- Admin authorization is determined by the authenticated Supabase user and the `profiles.role` value.
+- Product CRUD is protected by RLS.
+- Product images belong in Supabase Storage, not permanent browser data URLs.
+- Bootstrap-admin functionality is disabled after the initial administrator is established.
 
 ## Location
 
@@ -28,7 +50,7 @@ KCB Pay Bill: **522522** · Account: **1355793491**
 
 ## WhatsApp
 
-[0112 960 896](https://wa.me/254112960896)
+0112 960 896
 
 ---
 Made in Nairobi 🇰🇪 · Wear What You Feel
