@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Drip Closet — unified storefront, admin, POS and studio">
+<title>Drip Closet</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0b0b0d;color:#fff;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column}.bar{height:64px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#111115;border-bottom:1px solid #29292f;z-index:10}.brand{font-weight:800;font-size:20px;margin-right:auto;letter-spacing:-.5px}.brand span{opacity:.55;font-weight:500;font-size:12px;margin-left:6px}
+button{border:1px solid #303038;background:#18181e;color:#fff;border-radius:10px;padding:9px 13px;font-weight:650;cursor:pointer}button:hover{background:#23232a}button.active{background:#fff;color:#000;border-color:#fff}.frame{position:relative;flex:1}.view{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}.view.active{display:block}.mobile-note{display:none}
+@media(max-width:700px){.bar{height:auto;min-height:58px;overflow-x:auto}.brand{min-width:max-content}.nav{display:flex;gap:6px}.nav button{padding:8px 10px;font-size:12px}.mobile-note{display:block;font-size:10px;opacity:.55;min-width:max-content}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="bar">
+<div class="brand">DRIP CLOSET <span>UNIFIED</span></div>
+<div class="nav">
+<button class="active" data-view="store">Store</button>
+<button data-view="admin">Admin</button>
+<button data-view="pos">POS</button>
+<button data-view="studio">Studio</button>
+</div><div class="mobile-note">One app</div>
+</header>
+<main class="frame">
+<iframe id="store" class="view active" src="drip_closet_website.html" title="Drip Closet Storefront"></iframe>
+<iframe id="admin" class="view" src="drip_closet_admin.html" title="Drip Closet Admin"></iframe>
+<iframe id="pos" class="view" src="drip_closet_pos.html" title="Drip Closet POS"></iframe>
+<iframe id="studio" class="view" src="drip_closet_photoshop.html" title="Drip Closet Studio"></iframe>
+</main></div>
+<script>
+const buttons=[...document.querySelectorAll('[data-view]')];const views=[...document.querySelectorAll('.view')];
+function show(name){views.forEach(v=>v.classList.toggle('active',v.id===name));buttons.forEach(b=>b.classList.toggle('active',b.dataset.view===name));history.replaceState(null,'','#'+name)}
+buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+const initial=location.hash.slice(1);if(['store','admin','pos','studio'].includes(initial))show(initial);
+window.addEventListener('message',e=>{if(e.data&&e.data.type==='drip-closet-navigate'&&['store','admin','pos','studio'].includes(e.data.view))show(e.data.view)});
+</script>
+</body></html>
