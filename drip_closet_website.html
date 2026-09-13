@@ -8,9 +8,9 @@
   default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;
   img-src 'self' data: blob: https: http:;
   font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;
-  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  connect-src 'self' https://source.unsplash.com https://api.unsplash.com;
+  connect-src 'self' https://cezhlycsuecrvwfxbrpg.supabase.co https://source.unsplash.com https://api.unsplash.com;
   frame-ancestors 'none';
 ">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -3782,7 +3782,13 @@ function printQR(url,label){
   <div class="tag">SCAN &amp; SHOP</div>
   <br><br>
   <button onclick="window.print()" style="padding:10px 24px;background:#ff8c00;color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">🖨 Print</button>
-  </body></html>`);
+  
+<!-- Drip Closet shared Supabase runtime -->
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-api.js"></script>
+<script src="js/products-api.js"></script>
+<script src="js/drip-closet-runtime.js"></script>
+</body></html>`);
   w.document.close();
 }
 function copyQRUrl(){

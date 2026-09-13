@@ -1337,7 +1337,13 @@ function printQR(){
   <img src="${dataUrl}">
   <div class="url">${document.getElementById('qrUrlInput').value}</div>
   <script>window.onload=()=>window.print()<\/script>
-  </body></html>`);
+  
+<!-- Drip Closet shared Supabase runtime -->
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-api.js"></script>
+<script src="js/products-api.js"></script>
+<script src="js/drip-closet-runtime.js"></script>
+</body></html>`);
   w.document.close();
 }
 
